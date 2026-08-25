@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -11,8 +11,7 @@ class Settings(BaseSettings):
     google_client_id: str = "REPLACE-WITH-REAL-GOOGLE-OAUTH-CLIENT-ID.apps.googleusercontent.com"
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env")
 
 
 settings = Settings()
