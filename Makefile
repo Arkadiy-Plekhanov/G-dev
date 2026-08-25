@@ -1,5 +1,14 @@
 .PHONY: dev-up dev-migrate dev-down dev-test dev-logs
 
+# -include (not include): don't hard-fail if .env doesn't exist yet (e.g.
+# before the user has run `cp .env.example .env`). export: makes every
+# variable from .env a real environment variable in every recipe's shell --
+# without this, "$$APP_WRITER_PASSWORD" below would silently see nothing
+# (docker compose reads .env for ITS OWN interpolation; that does not
+# automatically leak into the host shell make itself runs commands in).
+-include .env
+export
+
 # Tier 1 local dev, in the ONLY order that works: Postgres has to be not
 # just running but MIGRATED before backend can connect -- app_writer (the
 # role backend/app/db.py connects as) doesn't exist until
@@ -29,6 +38,8 @@ dev-migrate:
 	docker compose run --rm backend python3 /database/06_seed_catalog_and_ideals.py
 	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/08_migrate_and_cutover.sql
 	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/09_remove_is_relevant.sql
+	@echo "Syncing app_writer password to APP_WRITER_PASSWORD from .env (01_...sql hardcodes a dev default; this makes the actual role match whatever .env says, instead of requiring the two to coincidentally agree)..."
+	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -c "ALTER ROLE app_writer WITH PASSWORD '$${APP_WRITER_PASSWORD:-change_me_in_production}'"
 	@echo "Migrations applied."
 
 dev-down:

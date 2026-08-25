@@ -25,3 +25,7 @@ dist/
 
 # --- local Postgres data volume (if bind-mounted) ---
 pgdata/
+
+#git
+G-dev/
+G-local/
