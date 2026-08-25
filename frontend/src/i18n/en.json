@@ -1,0 +1,102 @@
+{
+  "nav": { "home": "Home", "actions": "Log", "goals": "Goals", "qualities": "Qualities", "profile": "Profile" },
+  "auth": {
+    "tagline": "Notice what you did. See which qualities showed up.",
+    "signInHint": "Sign in with Google to begin."
+  },
+  "onboarding": {
+    "title": "Who do you want to become?",
+    "subtitle": "Choose how to build your starting focus — you can always change it later.",
+    "pathIdeal": "Choose an ideal",
+    "pathIdealHint": "Start from a figure whose qualities you admire.",
+    "pathManual": "Build your own",
+    "pathManualHint": "Pick individual qualities yourself.",
+    "pathTest": "Take an assessment",
+    "pathTestHint": "Coming soon.",
+    "pathTestComingSoon": "The assessment isn't ready yet. Try an ideal or build your own for now.",
+    "chooseIdeal": "Choose an ideal",
+    "idealComposition": "This ideal's qualities",
+    "confirmIdeal": "Adopt these qualities",
+    "manualTitle": "Pick qualities to track",
+    "manualSearch": "Search the catalog…",
+    "manualDone": "Done — go to my qualities",
+    "adopted": "Added to your qualities"
+  },
+  "home": {
+    "greeting": "Today",
+    "logAction": "Log an action",
+    "focusQualities": "In focus",
+    "recentActions": "Recent",
+    "noFocus": "No qualities in focus yet.",
+    "noActions": "Nothing logged yet."
+  },
+  "action": {
+    "new": "Log an action",
+    "whatHappened": "What happened?",
+    "namePlaceholder": "Describe what you did…",
+    "date": "Date",
+    "goal": "Related goal (optional)",
+    "context": "Context (optional)",
+    "qualitiesShown": "Which qualities showed up?",
+    "addQuality": "Add a quality",
+    "noneSelectedYet": "None selected yet — add the qualities that actually showed up.",
+    "rateHint": "Rate 0–4. 0 means the quality was relevant but showed up in reverse — not that it didn't happen.",
+    "save": "Save action",
+    "saved": "Saved"
+  },
+  "goals": {
+    "title": "Goals",
+    "new": "New goal",
+    "namePlaceholder": "Name your goal",
+    "parent": "Parent goal (optional)",
+    "status": "Status",
+    "priority": "Priority",
+    "empty": "No goals yet. Start with one you care about.",
+    "overview": "Overview",
+    "recentActions": "Recent actions",
+    "qualitiesHere": "Qualities that showed up here",
+    "aboveUsual": "above usual",
+    "belowUsual": "below usual",
+    "asUsual": "as usual"
+  },
+  "qualities": {
+    "title": "My qualities",
+    "add": "Add a quality",
+    "empty": "You haven't added any qualities yet.",
+    "overview": "Overview",
+    "recentExpressions": "Recent",
+    "byContext": "By context",
+    "trend": "Trend",
+    "average": "Average",
+    "focus": "Focus",
+    "status": "Status"
+  },
+  "profile": {
+    "title": "Profile",
+    "export": "Export my data",
+    "exported": "Downloaded",
+    "deleteAccount": "Delete my account",
+    "deleteConfirm": "This permanently deletes your account and everything in it. This cannot be undone.",
+    "signOut": "Sign out"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "delete": "Delete",
+    "back": "Back"
+  },
+  "errors": {
+    "GOAL_NOT_FOUND": "That goal no longer exists.",
+    "QUALITY_NOT_FOUND": "That quality isn't in your list.",
+    "ACTION_NOT_FOUND": "That action no longer exists.",
+    "GOAL_CYCLE_DETECTED": "That would create a loop in your goal tree.",
+    "INVALID_REFERENCE": "That refers to something that no longer exists.",
+    "QUALITY_ALREADY_ADOPTED": "You've already added this quality.",
+    "QUALITY_ALREADY_IN_ACTION": "This quality is already in this action.",
+    "ONE_ACTIVE_CYCLE_ALREADY_EXISTS": "You already have an active cycle — finish it first.",
+    "SESSION_EXPIRED": "Your session expired. Please sign in again.",
+    "UNKNOWN_ERROR": "Something went wrong. Please try again."
+  }
+}

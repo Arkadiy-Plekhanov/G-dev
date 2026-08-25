@@ -1,0 +1,56 @@
+# Tier 1 (local development) per docs/deployment/HUMAN_DEPLOYMENT_GUIDE.md.
+# Postgres 17 here deliberately matches Neon's default (Tier 2) and the safe
+# console choice on ApsaraDB RDS (Tier 3) -- migrations behave identically
+# at every tier. This reproduces the SHAPE of the stack for development; it
+# is not the production deployment topology (see docs/deployment/ for that).
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: selfdev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database:/database:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://app_writer:${APP_WRITER_PASSWORD:-change_me_in_production}@postgres:5432/selfdev
+      SEED_DSN: host=postgres dbname=selfdev user=postgres password=localdev
+    volumes:
+      - ./backend:/app
+      - ./database:/database:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    env_file:
+      - .env
+    environment:
+      VITE_API_BASE_URL: http://127.0.0.1:8000/v1
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

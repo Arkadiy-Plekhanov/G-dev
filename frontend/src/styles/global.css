@@ -1,0 +1,269 @@
+/*
+  Design direction: "Field Notebook" — a naturalist's observation journal.
+  The whole product is about noticing and recording instances of a quality
+  appearing in ordinary life, the way a field naturalist logs a sighting.
+  Deliberately not the three generic AI-default looks (warm cream+terracotta,
+  near-black+neon, broadsheet). Paper is cooler/greyer than the common cream;
+  ink is a deep botanical green, not black; accent is aged-gold, not orange.
+*/
+:root {
+  --paper: #EFEEE4;
+  --paper-raised: #F8F7F0;
+  --ink: #1F2E23;
+  --ink-soft: #5B6358;
+  --line: #D8D4C4;
+  --growth: #4C7A5E;
+  --growth-soft: #E4EBE3;
+  --gold: #B08D3F;
+  --gold-soft: #F1E9D4;
+  --brick: #9C5B4A;
+  --brick-soft: #F1E1DC;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0 0 var(--space-2) 0;
+  color: var(--ink);
+}
+h1 { font-size: 1.75rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.05rem; }
+
+p { margin: 0 0 var(--space-3) 0; color: var(--ink-soft); }
+
+a { color: var(--growth); }
+
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--growth);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+.screen {
+  flex: 1;
+  padding: var(--space-5) var(--space-4) calc(var(--space-7) + var(--space-5));
+  overflow-y: auto;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: var(--space-1);
+}
+
+.card {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.card--tappable {
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.card--tappable:hover, .card--tappable:focus-visible {
+  border-color: var(--growth);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+.btn-primary { background: var(--ink); color: var(--paper-raised); }
+.btn-primary:hover { background: var(--growth); }
+.btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn-secondary:hover { border-color: var(--ink); }
+.btn-danger { background: var(--brick-soft); color: var(--brick); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.field { margin-bottom: var(--space-4); }
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-bottom: var(--space-1);
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+.field textarea { min-height: 80px; resize: vertical; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  background: var(--growth-soft);
+  color: var(--growth);
+}
+.pill--gold { background: var(--gold-soft); color: var(--gold); }
+.pill--brick { background: var(--brick-soft); color: var(--brick); }
+
+.error-banner {
+  background: var(--brick-soft);
+  color: var(--brick);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-7) var(--space-4);
+  color: var(--ink-soft);
+}
+
+/* Bottom navigation — thin hairline, quiet, mono labels */
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  border-top: 1px solid var(--line);
+  background: var(--paper-raised);
+}
+.bottom-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) 0 calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+}
+.bottom-nav a.active { color: var(--growth); }
+
+/* Signature element: the quality rating control.
+   0 is a qualitatively different state (relevant but inverted/failed),
+   not the low end of a smooth 0-4 continuum — so it is visually set apart
+   (brick tone, left, gapped) rather than drawn as the first of five equal
+   dots on a single scale. 1-4 read as increasing ink saturation. */
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.rating-zero, .rating-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--paper-raised);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rating-zero { border-color: var(--brick); color: var(--brick); margin-right: var(--space-2); }
+.rating-zero.selected { background: var(--brick); color: var(--paper-raised); }
+.rating-dot.selected { background: var(--growth); border-color: var(--growth); color: var(--paper-raised); }
+.rating-dot[data-level="1"].selected { opacity: 0.55; }
+.rating-dot[data-level="2"].selected { opacity: 0.7; }
+.rating-dot[data-level="3"].selected { opacity: 0.85; }
+.rating-dot[data-level="4"].selected { opacity: 1; }
+
+.quality-search-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.quality-search-result:hover { background: var(--growth-soft); }
+
+.trend-up { color: var(--growth); }
+.trend-down { color: var(--brick); }
+.trend-flat { color: var(--ink-soft); }
+
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid var(--line);
+  border-top-color: var(--growth);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.center-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-7);
+}
