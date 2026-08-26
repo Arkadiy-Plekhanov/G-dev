@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext'
 import { qualitiesApi } from './api/resources'
 import { CenterLoading } from './components/Feedback'
 import BottomNav from './components/BottomNav'
+import { OnboardingStatusContext } from './onboarding/OnboardingContext'
 
 import LoginPage from './pages/LoginPage'
 import ChoosePathPage from './pages/onboarding/ChoosePathPage'
@@ -27,8 +28,22 @@ function AuthGate({ children }) {
 /** Пользователь без единого принятого качества направляется на онбординг --
  * ровно тот момент, когда все три равноценных пути реально нужны. Проверка
  * лёгкая (один список качеств), не блокирует остальную навигацию, если он
- * уже внутри /onboarding. */
-function OnboardingGate({ children }) {
+ * уже внутри /onboarding.
+ *
+ * hasQualities проверяется ОДИН раз при монтировании (useEffect с пустыми
+ * зависимостями) -- и намеренно НЕ на каждую навигацию: OnboardingGate
+ * оборачивает весь <Routes> и не размонтируется между клиентскими
+ * переходами, так что лишний повторный запрос на каждый клик был бы просто
+ * тратой сети. Но это означает, что значение, полученное сразу после
+ * первого входа (у нового пользователя оно честно false), иначе так и
+ * останется false и после успешного онбординга -- IdealPage/ManualPage
+ * вызывают markOnboarded() (см. onboarding/OnboardingContext.jsx) прямо
+ * перед переходом на "/", чтобы обновить именно этот один бит состояния
+ * без лишнего запроса. Раньше (реальный баг, найден ручным тестированием)
+ * этого сигнала не было -- после адопции качеств пользователя тут же
+ * отправляло обратно на /onboarding, потому что hasQualities оставался
+ * замороженным на "false" вплоть до полной перезагрузки страницы. */
+export function OnboardingGate({ children }) {
   const location = useLocation()
   const [hasQualities, setHasQualities] = useState(null)
 
@@ -40,7 +55,11 @@ function OnboardingGate({ children }) {
   if (!hasQualities && !location.pathname.startsWith('/onboarding')) {
     return <Navigate to="/onboarding" replace />
   }
-  return children
+  return (
+    <OnboardingStatusContext.Provider value={() => setHasQualities(true)}>
+      {children}
+    </OnboardingStatusContext.Provider>
+  )
 }
 
 function Layout({ children }) {

@@ -1,4 +1,18 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/v1'
+const BASE_URL =
+  (import.meta.env.VITEST && import.meta.env.VITE_TEST_API_BASE_URL) ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://127.0.0.1:8000/v1'
+// import.meta.env.VITEST -- флаг, который сам Vitest выставляет в true
+// (проверено эмпирически, не предположено). Нужен, потому что ОДИН и тот
+// же VITE_API_BASE_URL внутри Docker-контейнера frontend обязан означать
+// РАЗНОЕ для разных потребителей: для дев-сервера, который отдаёт код в
+// браузер хоста, верно "http://127.0.0.1:8000/v1" (хост резолвит это на
+// проброшенный порт бэкенда); для vitest, который выполняется внутри
+// САМОГО контейнера frontend, 127.0.0.1 -- это loopback этого же
+// контейнера, где бэкенда нет физически (он в соседнем контейнере
+// `backend`, доступном по имени сервиса). VITE_TEST_API_BASE_URL
+// (см. docker-compose.yml) -- отдельная переменная именно для этого
+// случая, действует только при реальном запуске под vitest.
 
 const TOKEN_KEY = 'qualities_access_token'
 const REFRESH_KEY = 'qualities_refresh_token'

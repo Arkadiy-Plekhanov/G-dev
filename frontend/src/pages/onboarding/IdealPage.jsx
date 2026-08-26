@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { catalogApi, onboardingApi } from '../../api/resources'
 import { CenterLoading, ErrorBanner } from '../../components/Feedback'
+import { useMarkOnboarded } from '../../onboarding/OnboardingContext'
 
 export default function IdealPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const markOnboarded = useMarkOnboarded()
   const [ideals, setIdeals] = useState(null)
   const [selected, setSelected] = useState(null)
   const [error, setError] = useState(null)
@@ -21,6 +23,7 @@ export default function IdealPage() {
     setError(null)
     try {
       await onboardingApi.adoptIdeal(selected.id)
+      markOnboarded()
       navigate('/', { replace: true })
     } catch (e) {
       setError(e)

@@ -29,6 +29,7 @@ services:
     environment:
       DATABASE_URL: postgresql://app_writer:${APP_WRITER_PASSWORD:-change_me_in_production}@postgres:5432/selfdev
       SEED_DSN: host=postgres dbname=selfdev user=postgres password=localdev
+      TEST_DB_HOST: postgres # тестовые файлы сами коннектятся к БД напрямую -- см. коммент в tests/*.py
     volumes:
       - ./backend:/app
       - ./database:/database:ro
@@ -44,6 +45,7 @@ services:
       - .env
     environment:
       VITE_API_BASE_URL: http://127.0.0.1:8000/v1
+      VITE_TEST_API_BASE_URL: http://backend:8000/v1 # только для vitest внутри контейнера -- см. комментарий в api/client.js
     volumes:
       - ./frontend:/app
       - /app/node_modules

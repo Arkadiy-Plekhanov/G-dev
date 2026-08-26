@@ -16,7 +16,15 @@ import psycopg2
 import psycopg2.extras
 import pytest
 
-DSN = "host=127.0.0.1 dbname=selfdev user=app_writer password=change_me_in_production"
+import os
+
+# host=127.0.0.1 -- правильно в песочнице и в CI (GitHub Actions чужой сервис
+# Postgres тоже маппится на 127.0.0.1 на том же раннере), но НЕ в Docker
+# Compose: внутри контейнера backend 127.0.0.1 -- это loopback самого
+# контейнера, Postgres там нет физически (он в отдельном контейнере
+# `postgres`, доступном по имени сервиса). TEST_DB_HOST переопределяет это
+# для Docker -- см. docker-compose.yml.
+DSN = f"host={os.environ.get('TEST_DB_HOST', '127.0.0.1')} dbname=selfdev user=app_writer password=change_me_in_production"
 
 
 def conn_as(user_id: str | None):
