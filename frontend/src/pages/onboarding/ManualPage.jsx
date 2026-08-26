@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { catalogApi, qualitiesApi } from '../../api/resources'
 import { CenterLoading, ErrorBanner } from '../../components/Feedback'
+import { useMarkOnboarded } from '../../onboarding/OnboardingContext'
 
 export default function ManualPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const markOnboarded = useMarkOnboarded()
   const [catalog, setCatalog] = useState(null)
   const [adoptedIds, setAdoptedIds] = useState(new Set())
   const [query, setQuery] = useState('')
@@ -61,7 +63,7 @@ export default function ManualPage() {
         )
       })}
       {adoptedIds.size > 0 && (
-        <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate('/', { replace: true })}>
+        <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => { markOnboarded(); navigate('/', { replace: true }) }}>
           {t('onboarding.manualDone')} ({adoptedIds.size})
         </button>
       )}
