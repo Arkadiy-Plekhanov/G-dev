@@ -6,10 +6,15 @@ from app.routers import actions, analytics, auth, catalog, cycles, goals, onboar
 
 app = FastAPI(title="Личная система развития — API", version="0.1.0")
 
+# allow_credentials=False: у нас Bearer-токен в заголовке Authorization,
+# не cookies -- credentials (cookies/HTTP-auth) в этом потоке не участвуют
+# вообще. allow_credentials=True здесь был архитектурным рассогласованием
+# (и вдобавок несовместим с allow_origins=["*"], если он вдруг понадобится
+# для отладки: спецификация CORS запрещает эту комбинацию).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -67,7 +67,7 @@ Postgres, ЖДЁТ, пока он реально поднимется, и тол
 — и просто падал бы в цикле перезапуска. Это не баг Docker, это порядок причины и
 следствия: нельзя подключиться под ролью, которая ещё не создана.
 
-**Проверка:** `make dev-test` — должно показать **53 теста бэкенда + 12 тестов
+**Проверка:** `make dev-test` — должно показать **55 тестов бэкенда + 12 тестов
 фронтенда**, все зелёные. Это тот же самый набор тестов, что гонялся всё это время в
 облачной песочнице — теперь он гоняется у тебя локально, доказывая, что переход на
 Docker ничего не сломал.
@@ -79,20 +79,88 @@ Docker ничего не сломал.
 
 ## Этап 2 — Бесплатный удалённый стейджинг (Neon + Render + Cloudflare Pages)
 
-**Готово в репозитории:** `render.yaml` (Render сам прочитает настройки — build/start команды, регион Singapore, health-check — без ручного тыканья в дашборд) и `frontend/public/_redirects` (без него прямые ссылки на `/goals/123` будут давать 404 — SPA-роутинг живёт в браузере, не на сервере).
+**Готово в репозитории:** `render.yaml` (регион Ohio, Python-рантайм, health-check — но
+см. ниже ОБЯЗАТЕЛЬНОЕ условие, чтобы Render его вообще прочитал) и
+`frontend/public/_redirects` (SPA-фолбэк — хотя выяснилось, что Cloudflare Pages для
+чистого SPA справляется и без файла, пока в проекте нет `404.html`; файл оставлен как
+явная подстраховка).
 
-**1. Neon** — создай проект (Postgres 18, регион любой близкий; Neon Auth **не включай** — см. ниже почему), скопируй connection string. Примени миграции 01→06,08,09 тем же способом, что и локально, только указав `-d "$NEON_CONNECTION_STRING"` вместо локальной БД. **Смени пароль `app_writer`** с дефолтного `change_me_in_production` перед тем, как это станет доступно из интернета:
-```bash
-psql "$NEON_CONNECTION_STRING" -c "ALTER ROLE app_writer WITH PASSWORD '<новый-пароль>'"
+**1. Neon.** Создай проект (Postgres 18; Neon Auth **не включай** — см. ниже почему).
+Neon по умолчанию называет базу `neondb`, а у нас везде захардкожено `selfdev` — создай
+дополнительную базу в SQL Editor консоли, подключившись как `neondb_owner`:
+```sql
+CREATE DATABASE selfdev;
 ```
 
-**Про Neon Auth (тумблер при создании проекта) — сознательно НЕ включать.** Это не проверка токена, а замена всего потока входа: Google должен был бы редиректить на инфраструктуру Neon, а не на наш бэкенд, и сессии/JWT жили бы в схеме `neon_auth`, привязанной к конкретному Neon-проекту — то есть переезд на Alibaba в Tier 3 сломал бы аутентификацию. У нас уже есть своя рабочая, протестированная, руками подтверждённая система (Google Identity Services + свой JWT) — сохраняем её на всех уровнях без изменений.
+**Миграции — важно, откуда запускать.** Контейнер `postgres` из локального
+`docker-compose.yml` не может достучаться до внешнего интернета (проверено на практике —
+DNS не резолвится изнутри него; это известное поведение Docker Desktop на WSL2, не
+что-то специфичное для нашего проекта). Рабочий, воспроизводимый способ — ставить `psql`
+прямо в WSL2 и гонять миграции оттуда, не через `docker compose exec`:
+```bash
+sudo apt-get install -y postgresql-client   # один раз
 
-**2. Render** — подключи GitHub-репозиторий, Render найдёт `render.yaml` сам и предложит создать сервис `qualities-api-staging` (Singapore, бесплатный тариф, автодеплой на каждый push). После первого деплоя впиши в Render dashboard (Environment): `DATABASE_URL` (из Neon), `GOOGLE_CLIENT_ID`, и `CORS_ORIGINS` (заполнишь после шага 3, когда будет URL Cloudflare Pages) — `JWT_SECRET` Render сгенерирует сам. Бесплатный веб-сервис засыпает после 15 минут без запросов — первый запрос после сна ждёт около минуты, это нормально для стейджинга.
+export NEON_ADMIN_URL="postgresql://neondb_owner:<пароль>@<host>-pooler.<region>.aws.neon.tech/selfdev?sslmode=require&channel_binding=require"
 
-**3. Cloudflare Pages** — подключи тот же репозиторий, укажи: root directory `frontend`, build command `npm run build`, output directory `dist`. После первого деплоя получишь URL вида `https://<project>.pages.dev` — впиши его в Render как `CORS_ORIGINS=["https://<project>.pages.dev"]` (шаг 2), и в Cloudflare Pages env vars впиши `VITE_API_BASE_URL` = URL твоего Render-сервиса + `/v1`.
+psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/01_schema_v2_multitenant_BASE.sql
+psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/02_security_gate_migration.sql
+psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/03_google_auth_migration.sql
+psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/04_seed_reference_data.sql
+psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/05_catalog_ideals_schema.sql
+SEED_DSN="$NEON_ADMIN_URL" python3 database/06_seed_catalog_and_ideals.py   # нужен python3-psycopg2 в WSL, либо тот же шаг через backend-контейнер
+psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/08_migrate_and_cutover.sql
+psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/09_remove_is_relevant.sql
 
-**Переход к этапу 3, когда:** `git push` в `main` автоматически деплоит и бэкенд (Render), и фронтенд (Cloudflare Pages) без ручных действий; живой Cloudflare-URL реально разговаривает с живым Render-URL; полный цикл (Google-вход → онбординг → действие → статистика) проходит на этом стейджинге.
+psql "$NEON_ADMIN_URL" -c "ALTER ROLE app_writer WITH PASSWORD '<новый-надёжный-пароль>'"
+```
+Миграции — обязательно через `-pooler`-эндпоинт с ролью `neondb_owner` (она одна имеет
+права на CREATE ROLE/TABLE/POLICY). Само приложение потом подключается **той же
+pooled-строкой**, но ролью `app_writer` — наш RLS-контекст выставляется через
+`SET LOCAL`, а это ровно то, что совместимо с transaction-режимом пуллера Neon
+(session-level `SET` там бы не сработал, `SET LOCAL` — работает, потому что живёт строго
+в рамках одной транзакции).
+
+**Neon усыпляет compute после 5 минут простоя и обрывает уже открытые соединения** — это
+учтено в самом коде (`backend/app/db.py`: pre-ping перед выдачей соединения из пула +
+`connect_timeout=15`), отдельно ничего настраивать не нужно.
+
+**Про Neon Auth (тумблер при создании проекта) — сознательно НЕ включать.** Это не
+проверка токена, а замена всего потока входа: Google должен был бы редиректить на
+инфраструктуру Neon, а не на наш бэкенд, и сессии/JWT жили бы в схеме `neon_auth`,
+привязанной к конкретному Neon-проекту — то есть переезд на Alibaba в Tier 3 сломал бы
+аутентификацию. У нас уже есть своя рабочая, протестированная, руками подтверждённая
+система (Google Identity Services + свой JWT) — сохраняем её на всех уровнях без
+изменений.
+
+**2. Render.** ⚠️ **`render.yaml` читается ТОЛЬКО если сервис создаётся через
+Dashboard → New → Blueprint** (указываешь репозиторий, Render сам парсит файл). Если
+вместо этого нажать «New Web Service» и заполнять форму вручную — `render.yaml`
+полностью игнорируется, и именно это, похоже, и произошло в прошлый раз. Используй
+Blueprint.
+
+После первого деплоя впиши в Render dashboard → Environment (это то, что помечено
+`sync: false` в `render.yaml` — они сознательно не хранятся в git):
+- `DATABASE_URL` — pooled-строка Neon, роль `app_writer` (не `neondb_owner`), база
+  `/selfdev` (не `/neondb`)
+- `GOOGLE_CLIENT_ID` — тот, что уже используешь
+- `CORS_ORIGINS` — пока `["http://localhost:5173"]` заглушкой, поправишь на шаге 3
+
+`JWT_SECRET` и `PYTHON_VERSION` Render заполнит/применит сам из `render.yaml`.
+Бесплатный сервис засыпает после 15 минут без запросов — первый запрос после сна ждёт
+около минуты, нормально для стейджинга.
+
+**3. Cloudflare Pages** — подключи тот же репозиторий, укажи: root directory `frontend`,
+build command `npm run build`, output directory `dist`. После первого деплоя получишь
+URL вида `https://<project>.pages.dev` — впиши его в Render как
+`CORS_ORIGINS=["https://<project>.pages.dev"]` (шаг 2), и в Cloudflare Pages env vars
+впиши `VITE_API_BASE_URL` = URL твоего Render-сервиса + `/v1`. Переменные с префиксом
+`VITE_` вшиваются в сборку статики на этапе билда — при их изменении нужен новый билд,
+не просто рестарт.
+
+**Переход к этапу 3, когда:** `git push` в `main` автоматически деплоит и бэкенд
+(Render), и фронтенд (Cloudflare Pages) без ручных действий; живой Cloudflare-URL
+реально разговаривает с живым Render-URL; полный цикл (Google-вход → онбординг →
+действие → статистика) проходит на этом стейджинге.
 
 ---
 

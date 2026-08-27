@@ -3,22 +3,28 @@ services:
     name: qualities-api-staging
     runtime: python
     plan: free
-    region: singapore
+    region: ohio # совпадает с регионом Neon (us-east-2) -- латентность backend<->DB важнее совпадения с будущим Alibaba-регионом на этом этапе
     rootDir: backend
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
     envVars:
+      # Render по умолчанию (для сервисов, созданных после 2026-02-11)
+      # ставит Python 3.14.3 -- плавающий дефолт, который меняется со
+      # временем. Весь проект разрабатывался и тестировался на 3.12 --
+      # фиксируем явно, чтобы не зависеть от будущих смен дефолта Render.
+      - key: PYTHON_VERSION
+        value: 3.12.9
       # DATABASE_URL, GOOGLE_CLIENT_ID -- вписать вручную в Render dashboard
       # после первого деплоя (sync: false = "спроси меня", не хранить в git).
+      # DATABASE_URL -- POOLED-строка от Neon (с -pooler в хосте) с ролью
+      # app_writer (не neondb_owner) и именем базы selfdev (не neondb).
       - key: DATABASE_URL
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       # CORS_ORIGINS -- JSON-массив строкой (подтверждено вживую, что
-      # pydantic-settings так и парсит list[str] из окружения). Вписать
-      # реальный Cloudflare Pages URL после его создания, например:
-      # ["https://qualities-app.pages.dev"]
+      # pydantic-settings так и парсит list[str] из окружения).
       - key: CORS_ORIGINS
         sync: false
       # JWT_SECRET -- Render сам сгенерирует случайное безопасное значение,
