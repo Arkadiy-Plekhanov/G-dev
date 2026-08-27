@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "qualities-app-frontend",
+  "name": "g-dev",
   // На момент реального деплоя поменяй на актуальную дату -- Cloudflare
   // требует "сегодняшнюю" compatibility_date, не абстрактную.
   "compatibility_date": "2026-08-27",
