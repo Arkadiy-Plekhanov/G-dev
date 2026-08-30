@@ -1,5 +1,11 @@
 {
-  "nav": { "home": "Home", "actions": "Log", "goals": "Goals", "qualities": "Qualities", "profile": "Profile" },
+  "nav": {
+    "home": "Home",
+    "actions": "Log",
+    "goals": "Goals",
+    "qualities": "Qualities",
+    "profile": "Profile"
+  },
   "auth": {
     "tagline": "Notice what you did. See which qualities showed up.",
     "signInHint": "Sign in with Google to begin."
@@ -98,5 +104,54 @@
     "ONE_ACTIVE_CYCLE_ALREADY_EXISTS": "You already have an active cycle — finish it first.",
     "SESSION_EXPIRED": "Your session expired. Please sign in again.",
     "UNKNOWN_ERROR": "Something went wrong. Please try again."
+  },
+  "rating": {
+    "groupLabel": "How did the quality show up?",
+    "inverted": {
+      "short": "Other way",
+      "name": "Went the other way",
+      "hint": "The quality was called for, and the opposite happened."
+    },
+    "spark": {
+      "name": "Spark",
+      "hint": "The intention was alive, but it did not carry through."
+    },
+    "kindling": {
+      "name": "Kindling",
+      "hint": "You worked at it. It grew, but showed up weakly."
+    },
+    "flame": {
+      "name": "Flame",
+      "hint": "Clear and deliberate. It held, and it moved something."
+    },
+    "gem": {
+      "name": "Gem",
+      "hint": "No conscious effort needed. It is simply how you acted."
+    }
+  },
+  "stats": {
+    "trend": {
+      "insufficient_data": "Not enough data yet",
+      "rising": "Rising",
+      "declining": "Declining",
+      "steady": "Steady"
+    },
+    "stability": {
+      "insufficient_data": "Not enough data yet",
+      "high": "Consistent",
+      "medium": "Uneven",
+      "low": "Volatile"
+    },
+    "confidence": {
+      "no_data": "No data yet",
+      "very_limited": "Very little data",
+      "limited": "Limited data",
+      "sufficient": "Enough data",
+      "robust": "Solid sample"
+    },
+    "inversions_none": "No reversals recorded",
+    "inversions_count_one": "1 time it went the other way",
+    "inversions_count_other": "{{count}} times it went the other way",
+    "growth_basis": "Average across {{count}} growth entries"
   }
 }

@@ -14,7 +14,7 @@ _SELECT = """
     SELECT uq.id, uq.catalog_quality_id, cq.name, uq.focus_code, uq.dev_status_code,
            uq.current_level, uq.source,
            qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.stability, qs.confidence,
-           qs.expression_count
+           qs.last_expressed_at, qs.expression_count, qs.inversion_count, qs.inversion_count_30d
     FROM user_qualities uq
     JOIN catalog_qualities cq ON cq.id = uq.catalog_quality_id
     LEFT JOIN quality_stats qs ON qs.quality_id = uq.id

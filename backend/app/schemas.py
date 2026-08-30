@@ -113,7 +113,10 @@ class UserQualityOut(BaseModel):
     trend: Optional[str] = None
     stability: Optional[str] = None
     confidence: Optional[str] = None
-    expression_count: Optional[int] = None
+    last_expressed_at: Optional[date] = None # когда качество замечали в последний раз
+    expression_count: Optional[int] = None   # число ступеней роста (основа среднего)
+    inversion_count: Optional[int] = None    # обратные проявления -- вне шкалы роста
+    inversion_count_30d: Optional[int] = None
 
 
 # ---------- atomic action + nested expressions ----------

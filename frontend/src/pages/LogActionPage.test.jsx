@@ -35,7 +35,7 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     // Качество добавлено, но ещё НЕ оценено -- вот теперь сохранить нельзя.
     expect(saveButton.disabled).toBe(true)
 
-    await user.click(screen.getByLabelText('3'))
+    await user.click(screen.getByLabelText(/^Flame/))
     expect(saveButton.disabled).toBe(false)
   })
 
@@ -46,7 +46,7 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     await user.type(screen.getByPlaceholderText(/Describe what you did/i), 'Ran a difficult negotiation')
     await user.click(screen.getByRole('button', { name: /Add a quality/i }))
     await user.click(await screen.findByText(quality.name.en))
-    await user.click(screen.getByLabelText('4'))
+    await user.click(screen.getByLabelText(/^Gem/))
     await user.click(screen.getByRole('button', { name: /Save action/i }))
 
     await waitFor(async () => {
@@ -71,7 +71,7 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     await user.type(screen.getByPlaceholderText(/Describe what you did/i), 'Lost my temper')
     await user.click(screen.getByRole('button', { name: /Add a quality/i }))
     await user.click(await screen.findByText(quality.name.en))
-    await user.click(screen.getByLabelText('0 — showed up in reverse'))
+    await user.click(screen.getByLabelText(/Went the other way/))
 
     const saveButton = screen.getByRole('button', { name: /Save action/i })
     expect(saveButton.disabled).toBe(false)

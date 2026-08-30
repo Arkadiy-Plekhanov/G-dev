@@ -36,3 +36,22 @@ def get_quality_groups(_user_id: str = Depends(get_current_user_id)):
     with get_conn() as cur:
         cur.execute("SELECT id, code, label FROM quality_groups WHERE is_active ORDER BY sort_order")
         return cur.fetchall()
+
+
+@router.get("/score-legend")
+def get_score_legend(_user_id: str = Depends(get_current_user_id)):
+    """Шкала оценки проявления качества. Отдаётся из БД, а не хардкодится
+    во фронтенде: названия ступеней -- доменный словарь продукта, они
+    локализуются вместе с каталогом качеств и должны быть одинаковы для
+    всех трёх клиентов (веб, мобильные, десктоп).
+
+    is_growth_stage=false у единственной записи (score=0, "пошло иначе"):
+    это не низшая ступень, а запись другого рода -- она не участвует в
+    средних (см. quality_stats) и в интерфейсе должна быть отделена
+    визуально, а не стоять первой в общем ряду."""
+    with get_conn() as cur:
+        cur.execute(
+            "SELECT score, slug, name, description, is_growth_stage "
+            "FROM score_legend ORDER BY score"
+        )
+        return cur.fetchall()

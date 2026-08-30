@@ -38,13 +38,28 @@ export default function QualityDetailPage() {
           </div>
           <div>
             <div className="eyebrow">{t('qualities.trend')}</div>
-            <div>{q.trend || '—'}</div>
+            <div>{q.trend ? t(`stats.trend.${q.trend}`) : '—'}</div>
           </div>
         </div>
         <div style={{ marginTop: 8, fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
-          {q.stability} · {q.confidence}
+          {q.stability ? t(`stats.stability.${q.stability}`) : '—'}
+          {' · '}
+          {q.confidence ? t(`stats.confidence.${q.confidence}`) : '—'}
         </div>
       </div>
+
+      {q.expression_count > 0 && (
+        <div className="eyebrow" style={{ marginTop: -8, marginBottom: 16 }}>
+          {t('stats.growth_basis', { count: q.expression_count })}
+          {q.inversion_count > 0 && (
+            <>
+              {' · '}
+              {t(q.inversion_count === 1 ? 'stats.inversions_count_one' : 'stats.inversions_count_other',
+                 { count: q.inversion_count })}
+            </>
+          )}
+        </div>
+      )}
 
       <h3>{t('qualities.recentExpressions')}</h3>
       {recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
