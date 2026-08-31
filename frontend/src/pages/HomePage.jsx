@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { analyticsApi, actionsApi } from '../api/resources'
+import { growthStage } from '../lib/growthStage'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { useAuth } from '../auth/AuthContext'
 
@@ -64,7 +65,10 @@ export default function HomePage() {
         <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable" style={{ display: 'flex', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit' }}>
           <span>{q.name.en}</span>
           <span className={TREND_CLASS[q.trend] || 'trend-flat'}>
-            {q.avg_score_all_time != null ? Number(q.avg_score_all_time).toFixed(1) : '—'}
+            {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
+            {q.avg_score_all_time != null && (
+              <span className="eyebrow" style={{ marginLeft: 4 }}>{Number(q.avg_score_all_time).toFixed(1)}</span>
+            )}
             {TREND_ARROW[q.trend] && <span style={{ marginLeft: 4 }}>{TREND_ARROW[q.trend]}</span>}
           </span>
         </Link>

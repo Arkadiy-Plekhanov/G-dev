@@ -150,6 +150,11 @@ def test_goal_overview_recent_actions_and_baseline_comparison(scenario):
     assert quality_row["count_in_goal"] == 2
     assert float(quality_row["avg_in_goal"]) == 4.0
     assert quality_row["vs_baseline"] == "above_usual"  # 4.0 против общего (4+4+1)/3=3.0, diff=1.0 >= 0.3
+    # quality_id (не catalog_quality_id!) -- фронтенду нужен именно id
+    # ПРИНЯТОГО качества пользователя, чтобы ссылка на карточку качества
+    # с личной статистикой (/qualities/{id}) вообще открывалась, а не
+    # 404-илась: раньше наружу отдавался только catalog_quality_id.
+    assert quality_row["quality_id"] == ctx["quality"]["id"]
 
 
 def test_quality_overview_context_breakdown(scenario):

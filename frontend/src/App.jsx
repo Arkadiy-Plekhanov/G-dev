@@ -13,10 +13,12 @@ import ManualPage from './pages/onboarding/ManualPage'
 import HomePage from './pages/HomePage'
 import LogActionPage from './pages/LogActionPage'
 import ActionsHistoryPage from './pages/ActionsHistoryPage'
+import ActionDetailPage from './pages/ActionDetailPage'
 import GoalsListPage from './pages/GoalsListPage'
 import GoalDetailPage from './pages/GoalDetailPage'
 import QualitiesListPage from './pages/QualitiesListPage'
 import QualityDetailPage from './pages/QualityDetailPage'
+import CatalogQualityPage from './pages/CatalogQualityPage'
 import SeasonsListPage from './pages/SeasonsListPage'
 import SeasonFormPage from './pages/SeasonFormPage'
 import SeasonDetailPage from './pages/SeasonDetailPage'
@@ -91,10 +93,12 @@ function AuthedApp() {
           <Route path="/" element={<HomePage />} />
           <Route path="/log" element={<LogActionPage />} />
           <Route path="/actions" element={<ActionsHistoryPage />} />
+          <Route path="/actions/:id" element={<ActionDetailPage />} />
           <Route path="/goals" element={<GoalsListPage />} />
           <Route path="/goals/:id" element={<GoalDetailPage />} />
           <Route path="/qualities" element={<QualitiesListPage />} />
           <Route path="/qualities/:id" element={<QualityDetailPage />} />
+          <Route path="/catalog/:id" element={<CatalogQualityPage />} />
           <Route path="/cycles" element={<SeasonsListPage />} />
           <Route path="/cycles/new" element={<SeasonFormPage />} />
           <Route path="/cycles/:id" element={<SeasonDetailPage />} />

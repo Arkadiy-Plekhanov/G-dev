@@ -42,7 +42,9 @@ describe('goal overview card, against the real backend', () => {
     const catalog = await catalogApi.qualities()
     const q = await qualitiesApi.adopt({ catalog_quality_id: catalog[0].id })
 
-    // Внутри цели: две оценки по 4 -> avg_in_goal = 4.0
+    // Внутри цели: три оценки по 4 -> avg_in_goal = 4.0, n=3 (минимум для
+    // growthStage(), чтобы стадия показывалась честно, а не как "мало
+    // данных" -- см. lib/growthStage.js: n<3 всегда даёт null).
     await actionsApi.createWithQualities({
       name: 'Ran the kickoff', occurred_at: '2026-08-10', goal_id: goal.id,
       qualities: [{ quality_id: q.id, score: 4 }],
@@ -51,7 +53,11 @@ describe('goal overview card, against the real backend', () => {
       name: 'Closed the deal', occurred_at: '2026-08-15', goal_id: goal.id,
       qualities: [{ quality_id: q.id, score: 4 }],
     })
-    // Вне цели: одна оценка 1 -> общее среднее (4+4+1)/3 = 3.0, diff=+1.0 -> above_usual
+    await actionsApi.createWithQualities({
+      name: 'Signed the contract', occurred_at: '2026-08-18', goal_id: goal.id,
+      qualities: [{ quality_id: q.id, score: 4 }],
+    })
+    // Вне цели: одна оценка 1 -> общее среднее (4+4+4+1)/4 = 3.25, diff=+0.75 -> above_usual
     await actionsApi.createWithQualities({
       name: 'Unrelated slip', occurred_at: '2026-08-01',
       qualities: [{ quality_id: q.id, score: 1 }],
@@ -68,7 +74,7 @@ describe('goal overview card, against the real backend', () => {
     expect(screen.getByText('Ran the kickoff')).toBeInTheDocument()
     expect(screen.queryByText('Unrelated slip')).not.toBeInTheDocument() // не эта цель
 
-    expect(screen.getByText('4.0')).toBeInTheDocument()
-    expect(screen.getByText(/above usual/i)).toBeInTheDocument()
+    expect(screen.getByText(/Gem/i)).toBeInTheDocument() // growthStage(4.0) -- именованная стадия, не голое число
+    expect(screen.getByText(/above usual/i)).toBeInTheDocument() // только в баннере-заголовке: в списке эта же плашка подавлена для качества-заголовка, чтобы не дублировать
   })
 })

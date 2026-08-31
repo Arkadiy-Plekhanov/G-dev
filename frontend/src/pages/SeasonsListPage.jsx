@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { cyclesApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 
@@ -9,9 +9,16 @@ import { CenterLoading, ErrorBanner } from '../components/Feedback'
  * сезона (гарантия БД: one_active_cycle_per_user) само по себе почти всегда
  * кладёт его сверху -- но "почти всегда" не то же самое, что "всегда"
  * (сезон без даты начала, более новый planned-сезон), поэтому статус
- * проверяется явно, а не полагается на порядок сортировки бэкенда. */
+ * проверяется явно, а не полагается на порядок сортировки бэкенда.
+ *
+ * Ровно один сезон (типичный случай сразу после первого создания) --
+ * список из одной карточки не несёт ценности сам по себе, только лишний
+ * клик до содержимого. Редирект прямо на карточку, а не дублирование её
+ * разметки здесь превью-версией: как только появится второй сезон,
+ * список снова осмыслен и появляется сам собой. */
 export default function SeasonsListPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [seasons, setSeasons] = useState(null)
   const [error, setError] = useState(null)
 
@@ -19,8 +26,12 @@ export default function SeasonsListPage() {
     cyclesApi.list().then(setSeasons).catch(setError)
   }, [])
 
+  useEffect(() => {
+    if (seasons?.length === 1) navigate(`/cycles/${seasons[0].id}`, { replace: true })
+  }, [seasons, navigate])
+
   if (error) return <div className="screen"><ErrorBanner error={error} /></div>
-  if (!seasons) return <CenterLoading />
+  if (!seasons || seasons.length === 1) return <CenterLoading />
 
   const active = seasons.find((s) => s.status_code === 'active')
   const rest = seasons.filter((s) => s.status_code !== 'active')

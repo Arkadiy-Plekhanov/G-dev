@@ -42,8 +42,8 @@ export default function QualityDetailPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
           <div>
             <div className="eyebrow">{t('qualities.average')}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', lineHeight: 1.1 }}>
-              {q.avg_score_all_time != null ? Number(q.avg_score_all_time).toFixed(1) : '—'}
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', lineHeight: 1.1 }}>
+              {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
               {trendArrow && (
                 <span
                   className={`trend-${q.trend === 'rising' ? 'up' : q.trend === 'declining' ? 'down' : 'flat'}`}
@@ -55,6 +55,7 @@ export default function QualityDetailPage() {
               )}
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+              {q.avg_score_all_time != null && `${Number(q.avg_score_all_time).toFixed(1)} · `}
               {q.trend ? t(`stats.trend.${q.trend}`) : '—'}
             </div>
           </div>

@@ -26,7 +26,8 @@
     "manualTitle": "Pick qualities to track",
     "manualSearch": "Search the catalog…",
     "manualDone": "Done — go to my qualities",
-    "adopted": "Added to your qualities"
+    "adopted": "Added to your qualities",
+    "selectThis": "Select this quality"
   },
   "home": {
     "greeting": "Today",
@@ -57,7 +58,8 @@
     "searchAllQualities": "Search all qualities…",
     "noQualityMatches": "Nothing matches.",
     "fromCatalog": "From the catalog",
-    "addToMine": "add"
+    "addToMine": "add",
+    "noQualities": "No qualities recorded for this one."
   },
   "goals": {
     "title": "Goals",
@@ -85,7 +87,8 @@
     "average": "Average",
     "focus": "Focus",
     "status": "Status",
-    "inFocus": "focus"
+    "inFocus": "focus",
+    "viewMyProgress": "View my progress"
   },
   "profile": {
     "title": "Profile",
@@ -234,7 +237,7 @@
     "nextCycleChange": "For next season",
     "nextCycleChangePlaceholder": "What should next season do differently?",
     "save": "Save reflection",
-    "aboutGoal": "About this goal",
+    "aboutGoal": "Reflect on this goal",
     "aboutSeason": "About this season",
     "reflectToday": "Reflect on today",
     "atLeastOneField": "Fill in at least one field to save."

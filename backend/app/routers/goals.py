@@ -85,7 +85,7 @@ def get_goal_overview(goal_id: str, user_id: str = Depends(get_current_user_id))
                    WHERE a.goal_id = %s
                    GROUP BY qe.quality_id
                )
-               SELECT cq.id AS catalog_quality_id, cq.name, pg.count_in_goal, pg.avg_in_goal,
+               SELECT cq.id AS catalog_quality_id, uq.id AS quality_id, cq.name, pg.count_in_goal, pg.avg_in_goal,
                       qs.avg_score_all_time,
                       CASE WHEN qs.avg_score_all_time IS NULL THEN NULL
                            WHEN pg.avg_in_goal > qs.avg_score_all_time + 0.3 THEN 'above_usual'

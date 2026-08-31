@@ -63,27 +63,16 @@ export default function ActionsHistoryPage() {
       {Object.entries(byDay).map(([day, dayActions]) => (
         <div key={day} style={{ marginBottom: 20 }}>
           <div className="eyebrow" style={{ marginBottom: 8 }}>{day}</div>
-          {dayActions.map((a) => {
-            const meta = a.avg_score != null && (
-              <div className="eyebrow" style={{ marginTop: 4 }}>
-                {a.quality_count} {a.quality_count === 1 ? 'quality' : 'qualities'} · {Number(a.avg_score).toFixed(1)}
-              </div>
-            )
-            // Не у каждого действия есть цель -- пустая ссылка "/goals/"
-            // вела бы на список целей молча, будто это осмысленный переход.
-            // Без цели карточка просто не кликабельна.
-            return a.goal_id ? (
-              <Link key={a.id} to={`/goals/${a.goal_id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <div>{a.name}</div>
-                {meta}
-              </Link>
-            ) : (
-              <div key={a.id} className="card">
-                <div>{a.name}</div>
-                {meta}
-              </div>
-            )
-          })}
+          {dayActions.map((a) => (
+            <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+              <div>{a.name}</div>
+              {a.avg_score != null && (
+                <div className="eyebrow" style={{ marginTop: 4 }}>
+                  {a.quality_count} {a.quality_count === 1 ? 'quality' : 'qualities'}
+                </div>
+              )}
+            </Link>
+          ))}
         </div>
       ))}
 

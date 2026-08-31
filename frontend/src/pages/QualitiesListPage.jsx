@@ -26,12 +26,14 @@ export default function QualitiesListPage() {
               style={{ display: 'flex', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit' }}>
           <div>
             <div>{q.name.en}</div>
-            <span className="eyebrow">
-              {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
-              {q.focus_code === 'current_focus' ? ` · ${t('qualities.inFocus')}` : ''}
-            </span>
+            {q.focus_code === 'current_focus' && <span className="eyebrow">{t('qualities.inFocus')}</span>}
           </div>
-          <span>{q.avg_score_all_time != null ? Number(q.avg_score_all_time).toFixed(1) : '—'}</span>
+          <span>
+            {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
+            {q.avg_score_all_time != null && (
+              <span className="eyebrow" style={{ marginLeft: 4 }}>{Number(q.avg_score_all_time).toFixed(1)}</span>
+            )}
+          </span>
         </Link>
       ))}
       <Link to="/onboarding/manual" className="btn btn-secondary" style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}>

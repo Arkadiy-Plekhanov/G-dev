@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { catalogApi, onboardingApi } from '../../api/resources'
 import { CenterLoading, ErrorBanner } from '../../components/Feedback'
 import { useMarkOnboarded } from '../../onboarding/OnboardingContext'
@@ -46,7 +46,9 @@ export default function IdealPage() {
         <h3>{t('onboarding.idealComposition')}</h3>
         <div className="card">
           {selected.qualities.map((q) => (
-            <div key={q.quality.id} style={{ padding: '6px 0' }}>{q.quality.name.en}</div>
+            <Link key={q.quality.id} to={`/catalog/${q.quality.id}`} style={{ display: 'block', padding: '6px 0', color: 'inherit', textDecoration: 'none' }}>
+              {q.quality.name.en}
+            </Link>
           ))}
         </div>
         <ErrorBanner error={error} />
