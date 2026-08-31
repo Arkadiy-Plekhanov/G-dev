@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { growthStage } from '../lib/growthStage'
 import { Link } from 'react-router-dom'
 import { qualitiesApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
@@ -25,7 +26,10 @@ export default function QualitiesListPage() {
               style={{ display: 'flex', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit' }}>
           <div>
             <div>{q.name.en}</div>
-            <span className="eyebrow">{q.dev_status_code}{q.focus_code === 'current_focus' ? ' · focus' : ''}</span>
+            <span className="eyebrow">
+              {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
+              {q.focus_code === 'current_focus' ? ` · ${t('qualities.inFocus')}` : ''}
+            </span>
           </div>
           <span>{q.avg_score_all_time != null ? Number(q.avg_score_all_time).toFixed(1) : '—'}</span>
         </Link>

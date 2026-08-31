@@ -12,10 +12,17 @@ import IdealPage from './pages/onboarding/IdealPage'
 import ManualPage from './pages/onboarding/ManualPage'
 import HomePage from './pages/HomePage'
 import LogActionPage from './pages/LogActionPage'
+import ActionsHistoryPage from './pages/ActionsHistoryPage'
 import GoalsListPage from './pages/GoalsListPage'
 import GoalDetailPage from './pages/GoalDetailPage'
 import QualitiesListPage from './pages/QualitiesListPage'
 import QualityDetailPage from './pages/QualityDetailPage'
+import SeasonsListPage from './pages/SeasonsListPage'
+import SeasonFormPage from './pages/SeasonFormPage'
+import SeasonDetailPage from './pages/SeasonDetailPage'
+import ReflectionsListPage from './pages/ReflectionsListPage'
+import ReflectionFormPage from './pages/ReflectionFormPage'
+import ReflectionDetailPage from './pages/ReflectionDetailPage'
 import ProfilePage from './pages/ProfilePage'
 
 function AuthGate({ children }) {
@@ -83,10 +90,18 @@ function AuthedApp() {
           <Route path="/onboarding/manual" element={<ManualPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/log" element={<LogActionPage />} />
+          <Route path="/actions" element={<ActionsHistoryPage />} />
           <Route path="/goals" element={<GoalsListPage />} />
           <Route path="/goals/:id" element={<GoalDetailPage />} />
           <Route path="/qualities" element={<QualitiesListPage />} />
           <Route path="/qualities/:id" element={<QualityDetailPage />} />
+          <Route path="/cycles" element={<SeasonsListPage />} />
+          <Route path="/cycles/new" element={<SeasonFormPage />} />
+          <Route path="/cycles/:id" element={<SeasonDetailPage />} />
+          <Route path="/cycles/:id/edit" element={<SeasonFormPage />} />
+          <Route path="/reflections" element={<ReflectionsListPage />} />
+          <Route path="/reflections/new" element={<ReflectionFormPage />} />
+          <Route path="/reflections/:id" element={<ReflectionDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

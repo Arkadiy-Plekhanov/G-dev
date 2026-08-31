@@ -119,7 +119,12 @@ export default function LogActionPage() {
       ))}
 
       {picking ? (
-        <QualityPicker myQualities={myQualities} excludeIds={excludeIds} onPick={addQuality} />
+        <QualityPicker
+          myQualities={myQualities}
+          excludeIds={excludeIds}
+          onPick={addQuality}
+          onAdopted={(q) => setMyQualities((prev) => [...prev, q])}
+        />
       ) : (
         <button className="btn btn-secondary" onClick={() => setPicking(true)}>{t('action.addQuality')}</button>
       )}

@@ -5,10 +5,22 @@ import { analyticsApi, actionsApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { useAuth } from '../auth/AuthContext'
 
-function trendClass(trend) {
-  if (trend?.includes('Growing') || trend === '↑') return 'trend-up'
-  if (trend?.includes('Declining') || trend === '↓') return 'trend-down'
-  return 'trend-flat'
+const TREND_CLASS = { rising: 'trend-up', declining: 'trend-down', steady: 'trend-flat' }
+const TREND_ARROW = { rising: '↗', declining: '↘', steady: '→' }
+
+/** §4.3: "одно предложение-вывод вместо списка цифр... в Фазе 1 --
+ * простейшее правило по имеющимся данным". Приоритет: сначала хорошая
+ * новость (что-то растёт), потом то, что стоит заметить (что-то падает),
+ * иначе -- нейтральное "стабильно", иначе -- честно: данных пока мало.
+ * Полноценные рекомендации (несколько сигналов, приоритизация) -- Фаза 2. */
+function pickInsight(focus) {
+  const withData = focus.filter((q) => q.trend && q.trend !== 'insufficient_data')
+  if (withData.length === 0) return { key: 'home.focusInsightNone' }
+  const rising = withData.find((q) => q.trend === 'rising')
+  if (rising) return { key: 'home.focusInsightRising', name: rising.name.en }
+  const declining = withData.find((q) => q.trend === 'declining')
+  if (declining) return { key: 'home.focusInsightDeclining', name: declining.name.en }
+  return { key: 'home.focusInsightSteady', name: withData[0].name.en }
 }
 
 export default function HomePage() {
@@ -29,8 +41,11 @@ export default function HomePage() {
       <div className="eyebrow">{t('home.greeting')}</div>
       <h1>{user?.display_name || ''}</h1>
 
-      <Link to="/log" className="btn btn-primary" style={{ textDecoration: 'none', marginBottom: 24 }}>
+      <Link to="/log" className="btn btn-primary" style={{ textDecoration: 'none', marginBottom: 12 }}>
         {t('home.logAction')}
+      </Link>
+      <Link to="/reflections/new" className="btn btn-secondary" style={{ textDecoration: 'none', marginBottom: 24, textAlign: 'center' }}>
+        {t('home.reflectPrompt')}
       </Link>
 
       <ErrorBanner error={error} />
@@ -38,14 +53,27 @@ export default function HomePage() {
       <h2>{t('home.focusQualities')}</h2>
       {!focus && !error && <CenterLoading />}
       {focus && focus.length === 0 && <p className="empty-state">{t('home.noFocus')}</p>}
+
+      {focus && focus.length > 0 && (
+        <p style={{ color: 'var(--ink-soft)', marginTop: -4 }}>
+          {t(pickInsight(focus).key, { name: pickInsight(focus).name })}
+        </p>
+      )}
+
       {focus && focus.map((q) => (
         <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable" style={{ display: 'flex', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit' }}>
           <span>{q.name.en}</span>
-          <span className={trendClass(q.trend)}>{q.avg_score_all_time != null ? Number(q.avg_score_all_time).toFixed(1) : '—'}</span>
+          <span className={TREND_CLASS[q.trend] || 'trend-flat'}>
+            {q.avg_score_all_time != null ? Number(q.avg_score_all_time).toFixed(1) : '—'}
+            {TREND_ARROW[q.trend] && <span style={{ marginLeft: 4 }}>{TREND_ARROW[q.trend]}</span>}
+          </span>
         </Link>
       ))}
 
-      <h2 style={{ marginTop: 24 }}>{t('home.recentActions')}</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 24 }}>
+        <h2 style={{ margin: 0 }}>{t('home.recentActions')}</h2>
+        <Link to="/actions" style={{ fontSize: '0.85rem' }}>{t('actionsHistory.seeAll')}</Link>
+      </div>
       {recent && recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recent && recent.map((a) => (
         <div key={a.id} className="card">

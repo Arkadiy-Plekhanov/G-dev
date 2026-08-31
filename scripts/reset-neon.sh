@@ -5,9 +5,13 @@ set -euo pipefail
 # неясно, в каком именно состоянии осталась база. Именно это произошло
 # 27.08.2026: все SQL-миграции (01-05,08,09) прошли успешно, а Python-шаг
 # 06 тихо упал где-то посреди борьбы с DNS -- и это обнаружилось только
-# явной проверкой count(), не раньше. set -e здесь не формальность: если
-# ЛЮБОЙ шаг упадёт, скрипт останавливается СРАЗУ с понятной ошибкой, а не
-# продолжает молча, как это было при копировании команд по одной вручную.
+# явной проверкой count(). set -e здесь не формальность: если ЛЮБОЙ шаг
+# упадёт, скрипт останавливается СРАЗУ с понятной ошибкой, а не продолжает
+# молча, как это было при копировании команд по одной вручную.
+#
+# Список и порядок самих миграций живёт в scripts/apply-migrations.sh --
+# общий с Makefile и CI. Этот файл отвечает только за то, что специфично
+# для Neon: пересоздание базы с нуля и финальную проверку результата.
 #
 # Запуск: NEON_ADMIN_URL="postgresql://neondb_owner:...@...-pooler..../selfdev?sslmode=require&channel_binding=require" bash scripts/reset-neon.sh
 # Обязательно из корня репозитория (пути к database/*.sql относительные).
@@ -33,29 +37,7 @@ psql "$ADMIN_ROOT_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE selfdev;"
 # Роль app_writer НЕ удаляется дропом базы (роли -- на уровне проекта, не
 # базы) -- пароль, который уже вписан в Render, останется рабочим.
 
-echo "==> 01: базовая схема..."
-psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/01_schema_v2_multitenant_BASE.sql
-
-echo "==> 02: security gate..."
-psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/02_security_gate_migration.sql
-
-echo "==> 03: google auth..."
-psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/03_google_auth_migration.sql
-
-echo "==> 04: справочники..."
-psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/04_seed_reference_data.sql
-
-echo "==> 05: схема каталога/идеалов..."
-psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/05_catalog_ideals_schema.sql
-
-echo "==> 06: сидирование каталога/идеалов (Python)..."
-SEED_DSN="$NEON_ADMIN_URL" python3 database/06_seed_catalog_and_ideals.py
-
-echo "==> 08: cutover..."
-psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/08_migrate_and_cutover.sql
-
-echo "==> 09: удаление is_relevant..."
-psql "$NEON_ADMIN_URL" -v ON_ERROR_STOP=1 -f database/09_remove_is_relevant.sql
+DSN="$NEON_ADMIN_URL" bash scripts/apply-migrations.sh
 
 echo "==> Проверка результата..."
 QUALITIES_COUNT=$(psql "$NEON_ADMIN_URL" -t -A -c "SELECT count(*) FROM catalog_qualities")

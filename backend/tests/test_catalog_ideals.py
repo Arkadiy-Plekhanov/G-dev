@@ -42,11 +42,24 @@ def cleanup():
     conn.close()
 
 
-def test_catalog_qualities_has_25(auth_client):
+def test_catalog_qualities_has_full_flower_catalog(auth_client):
+    """169 -- полный "Цветок духовных качеств" (миграция 12), без единой
+    внецветочной добавки: composition идеалов Marcus Aurelius/Buddha/
+    Nelson Mandela целиком на цветочных качествах (equanimity->balance-
+    equilibrium, mindfulness->attentiveness, loving-kindness->kindness-
+    love-of-good, reconciliation->peacefulness -- ближайшие по смыслу
+    замены, не механическое переименование). Не MVP-набор из 25. Точное
+    число, а не диапазон: любое отклонение означает, что каталог молча
+    потерял или задвоил качество при пересидке -- лучше упасть здесь, чем
+    узнать об этом от пользователя, листающего пустой поиск."""
     client, h = auth_client
     r = client.get("/v1/catalog/qualities", headers=h)
     assert r.status_code == 200
-    assert len(r.json()) == 25
+    body = r.json()
+    assert len(body) == 169
+    slugs = {q["slug"] for q in body}
+    assert {"wisdom", "courage", "love", "patience", "justice"} <= slugs
+    assert len({q["group_id"] for q in body}) == 9
 
 
 def test_catalog_ideals_has_3_with_compositions(auth_client):

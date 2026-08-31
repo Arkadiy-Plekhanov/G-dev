@@ -28,18 +28,28 @@ dev-up:
 	@echo "Backend:  http://127.0.0.1:8000"
 	@echo "Frontend: http://127.0.0.1:5173"
 
+# Список и порядок миграций живут в scripts/apply-migrations.sh (общий с
+# CI и scripts/reset-neon.sh) -- здесь только КАК их выполнить в Docker:
+# .sql через `postgres` (есть psql, нет python3), .py-сид через `backend`
+# (наоборот). Один контейнер не может выполнить весь список сам, поэтому
+# способ выполнения передаётся снаружи, а список -- общий.
+#
+# MSYS_NO_PATHCONV=1 -- обязателен на Windows (Git Bash/MSYS2, тот самый
+# MINGW64 в приглашении). Без него MSYS сам переписывает любой аргумент,
+# похожий на Unix-путь ("/database/...") в Windows-путь относительно
+# каталога установки Git ("C:/Program Files/Git/database/..."), даже
+# когда этот путь на самом деле предназначен для файловой системы ВНУТРИ
+# Linux-контейнера, где он абсолютно корректен -- реально ловили эту
+# ошибку живьём ("No such file or directory" на пути с "C:/Program
+# Files/Git" внутри). На Linux/macOS эта переменная просто ничего не значит.
 dev-migrate:
-	@echo "Applying migrations 01-06, 08-09 (07 is optional, real-Excel-only -- run manually if needed)..."
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/01_schema_v2_multitenant_BASE.sql
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/02_security_gate_migration.sql
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/03_google_auth_migration.sql
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/04_seed_reference_data.sql
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/05_catalog_ideals_schema.sql
-	docker compose run --rm backend python3 /database/06_seed_catalog_and_ideals.py
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/08_migrate_and_cutover.sql
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f /database/09_remove_is_relevant.sql
+	MSYS_NO_PATHCONV=1 \
+	PSQL_CMD="docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -f" \
+	PY_CMD="docker compose run --rm backend python3" \
+	DB_PREFIX="/database" \
+	  bash scripts/apply-migrations.sh
 	@echo "Syncing app_writer password to APP_WRITER_PASSWORD from .env (01_...sql hardcodes a dev default; this makes the actual role match whatever .env says, instead of requiring the two to coincidentally agree)..."
-	docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -c "ALTER ROLE app_writer WITH PASSWORD '$${APP_WRITER_PASSWORD:-change_me_in_production}'"
+	MSYS_NO_PATHCONV=1 docker compose exec -T postgres psql -U postgres -d selfdev -v ON_ERROR_STOP=1 -c "ALTER ROLE app_writer WITH PASSWORD '$${APP_WRITER_PASSWORD:-change_me_in_production}'"
 	@echo "Migrations applied."
 
 dev-down:

@@ -25,21 +25,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install migration deps
+        run: pip install psycopg2-binary --break-system-packages
       - name: Apply migrations
-        run: |
-          for f in database/01_schema_v2_multitenant_BASE.sql \
-                   database/02_security_gate_migration.sql \
-                   database/03_google_auth_migration.sql \
-                   database/04_seed_reference_data.sql \
-                   database/05_catalog_ideals_schema.sql; do
-            psql "postgresql://postgres:postgres@127.0.0.1:5432/selfdev" -v ON_ERROR_STOP=1 -f "$f"
-          done
-          pip install psycopg2-binary --break-system-packages
-          SEED_DSN="host=127.0.0.1 dbname=selfdev user=postgres password=postgres" \
-            python3 database/06_seed_catalog_and_ideals.py
-          for f in database/08_migrate_and_cutover.sql database/09_remove_is_relevant.sql; do
-            psql "postgresql://postgres:postgres@127.0.0.1:5432/selfdev" -v ON_ERROR_STOP=1 -f "$f"
-          done
+        # scripts/apply-migrations.sh -- единственный источник правды о списке
+        # миграций, используется здесь и в Makefile/scripts/reset-neon.sh.
+        # Раньше список был продублирован в трёх местах отдельно; добавление
+        # миграции 10 обновило только одно из них, CI остался со старым
+        # списком, и всё тихо сломалось до первого реального использования.
+        run: DSN="postgresql://postgres:postgres@127.0.0.1:5432/selfdev" bash scripts/apply-migrations.sh
       - name: Install backend deps
         working-directory: backend
         run: pip install -r requirements.txt --break-system-packages

@@ -34,7 +34,12 @@
     "focusQualities": "In focus",
     "recentActions": "Recent",
     "noFocus": "No qualities in focus yet.",
-    "noActions": "Nothing logged yet."
+    "noActions": "Nothing logged yet.",
+    "reflectPrompt": "Reflect on today",
+    "focusInsightRising": "{{name}} has been rising lately.",
+    "focusInsightSteady": "{{name}} has been steady lately.",
+    "focusInsightDeclining": "{{name}} has dipped a little lately.",
+    "focusInsightNone": "Log a few actions to start seeing patterns in your focus qualities."
   },
   "action": {
     "new": "Log an action",
@@ -48,7 +53,11 @@
     "noneSelectedYet": "None selected yet — add the qualities that actually showed up.",
     "rateHint": "Rate 0–4. 0 means the quality was relevant but showed up in reverse — not that it didn't happen.",
     "save": "Save action",
-    "saved": "Saved"
+    "saved": "Saved",
+    "searchAllQualities": "Search all qualities…",
+    "noQualityMatches": "Nothing matches.",
+    "fromCatalog": "From the catalog",
+    "addToMine": "add"
   },
   "goals": {
     "title": "Goals",
@@ -75,7 +84,8 @@
     "trend": "Trend",
     "average": "Average",
     "focus": "Focus",
-    "status": "Status"
+    "status": "Status",
+    "inFocus": "focus"
   },
   "profile": {
     "title": "Profile",
@@ -83,7 +93,11 @@
     "exported": "Downloaded",
     "deleteAccount": "Delete my account",
     "deleteConfirm": "This permanently deletes your account and everything in it. This cannot be undone.",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "more": "More",
+    "seasons": "Seasons",
+    "reflections": "Reflections",
+    "history": "History"
   },
   "common": {
     "save": "Save",
@@ -91,7 +105,9 @@
     "loading": "Loading…",
     "retry": "Try again",
     "delete": "Delete",
-    "back": "Back"
+    "back": "Back",
+    "saving": "saving…",
+    "edit": "Edit"
   },
   "errors": {
     "GOAL_NOT_FOUND": "That goal no longer exists.",
@@ -101,9 +117,12 @@
     "INVALID_REFERENCE": "That refers to something that no longer exists.",
     "QUALITY_ALREADY_ADOPTED": "You've already added this quality.",
     "QUALITY_ALREADY_IN_ACTION": "This quality is already in this action.",
-    "ONE_ACTIVE_CYCLE_ALREADY_EXISTS": "You already have an active cycle — finish it first.",
+    "ONE_ACTIVE_CYCLE_ALREADY_EXISTS": "You already have an active season — finish or end it first.",
     "SESSION_EXPIRED": "Your session expired. Please sign in again.",
-    "UNKNOWN_ERROR": "Something went wrong. Please try again."
+    "UNKNOWN_ERROR": "Something went wrong. Please try again.",
+    "CYCLE_NOT_FOUND": "Season not found.",
+    "REFLECTION_NOT_FOUND": "Reflection not found.",
+    "INVALID_DATE_RANGE": "The end date can't be before the start date."
   },
   "rating": {
     "groupLabel": "How did the quality show up?",
@@ -152,6 +171,79 @@
     "inversions_none": "No reversals recorded",
     "inversions_count_one": "1 time it went the other way",
     "inversions_count_other": "{{count}} times it went the other way",
-    "growth_basis": "Average across {{count}} growth entries"
+    "growth_basis": "Average across {{count}} growth entries",
+    "stage": {
+      "none": "not enough data yet",
+      "spark": "Spark · emerging",
+      "kindling": "Kindling · developing",
+      "flame": "Flame · established",
+      "gem": "Gem · embodied"
+    }
+  },
+  "seasons": {
+    "title": "Seasons",
+    "new": "New season",
+    "edit": "Edit season",
+    "empty": "No seasons yet",
+    "emptyHint": "A season is a stretch of time you take a few qualities into. It answers a question a single action can't: has this actually gotten better over time?",
+    "startSeason": "Start a season",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Spring focus, Q3 push",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "status": "Status",
+    "description": "Description",
+    "descriptionPlaceholder": "What is this season about?",
+    "summary": "Summary",
+    "summaryPlaceholder": "How did it go, looking back?",
+    "goals": "Goals",
+    "qualities": "Qualities",
+    "noneSelected": "None selected",
+    "daysElapsed": "{{done}} of {{total}} days",
+    "active": "Active",
+    "viewActive": "View your active season",
+    "startFromGoal": "Start a season for this goal",
+    "actionsInPeriod": "Actions this season",
+    "reflectionsInSeason": "Reflections",
+    "addReflection": "Reflect on this season",
+    "create": "Start season",
+    "save": "Save",
+    "delete": "Delete season",
+    "deleteConfirm": "Delete this season? Actions and reflections stay -- only the season itself goes."
+  },
+  "reflections": {
+    "title": "Reflections",
+    "new": "New reflection",
+    "empty": "No reflections yet",
+    "emptyHint": "A reflection turns what happened into something you can use next time.",
+    "typeDaily": "Daily",
+    "typeWeekly": "Weekly",
+    "typeCycle": "Season",
+    "whatWorked": "What worked?",
+    "whatWorkedPlaceholder": "What went well, specifically?",
+    "whatDidNotWork": "What didn't work?",
+    "whatDidNotWorkPlaceholder": "Where did you get stuck?",
+    "qualitiesObserved": "Qualities you noticed",
+    "qualitiesObservedPlaceholder": "Which qualities showed up, and how?",
+    "insight": "Insight",
+    "insightPlaceholder": "What's the one thing worth remembering from this?",
+    "whatToChange": "What to change",
+    "whatToChangePlaceholder": "What will you do differently?",
+    "whatStuck": "What stuck",
+    "whatStuckPlaceholder": "What kept coming back, unresolved?",
+    "nextCycleChange": "For next season",
+    "nextCycleChangePlaceholder": "What should next season do differently?",
+    "save": "Save reflection",
+    "aboutGoal": "About this goal",
+    "aboutSeason": "About this season",
+    "reflectToday": "Reflect on today",
+    "atLeastOneField": "Fill in at least one field to save."
+  },
+  "actionsHistory": {
+    "title": "History",
+    "empty": "No actions yet",
+    "emptyHint": "Everything you log will show up here, day by day.",
+    "loadMore": "Show more",
+    "seeAll": "See all"
   }
 }

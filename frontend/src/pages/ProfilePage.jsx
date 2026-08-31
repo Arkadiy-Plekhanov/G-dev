@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { authApi } from '../api/resources'
 import { ErrorBanner } from '../components/Feedback'
@@ -52,6 +52,18 @@ export default function ProfilePage() {
 
       <ErrorBanner error={error} />
 
+      <h2>{t('profile.more')}</h2>
+      <Link to="/cycles" className="card card--tappable" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+        {t('profile.seasons')}
+      </Link>
+      <Link to="/reflections" className="card card--tappable" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+        {t('profile.reflections')}
+      </Link>
+      <Link to="/actions" className="card card--tappable" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+        {t('profile.history')}
+      </Link>
+
+      <h2 style={{ marginTop: 24 }}>{t('profile.title')}</h2>
       <button className="btn btn-secondary" onClick={handleExport}>{t('profile.export')}</button>
       <button className="btn btn-secondary" style={{ marginTop: 8 }} onClick={() => logout().then(() => navigate('/'))}>
         {t('profile.signOut')}

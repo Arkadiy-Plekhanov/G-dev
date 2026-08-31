@@ -34,7 +34,31 @@
   --radius: 10px;
   --radius-sm: 6px;
 
-  color-scheme: light;
+  color-scheme: light dark;
+}
+
+/* Тёмная тема (Фаза 1, §6: "базовое требование категории"). Не инверсия
+   светлой палитры -- та же логика "полевого дневника", перенесённая в
+   темноту: бумага становится не чёрной, а глубокой холодной ночной
+   зеленью; чернила светлеют до тёплого пергаментного, не белого; золото
+   и кирпич чуть ярче, чтобы держать контраст на тёмном фоне. Следует
+   системной настройке ОС (prefers-color-scheme), без отдельного
+   переключателя в интерфейсе -- этого явно просит спецификация, а
+   собственный UI переключения тем ею не запрошен. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171D19;
+    --paper-raised: #212820;
+    --ink: #E9ECE5;
+    --ink-soft: #9CA79C;
+    --line: #3A4139;
+    --growth: #74A98A;
+    --growth-soft: #24312A;
+    --gold: #D3B268;
+    --gold-soft: #332C1C;
+    --brick: #C98A78;
+    --brick-soft: #3B2925;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -129,6 +153,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
   font-weight: 600;
   cursor: pointer;
   width: 100%;
+  min-height: 44px; /* цель касания (Фаза 1, §6): минимум 44x44pt */
 }
 .btn-primary { background: var(--ink); color: var(--paper-raised); }
 .btn-primary:hover { background: var(--growth); }
@@ -152,7 +177,19 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
   background: var(--paper-raised);
   color: var(--ink);
 }
+.field input, .field select { min-height: 44px; }
 .field textarea { min-height: 80px; resize: vertical; }
+/* Строка "чекбокс + подпись" в формах множественного выбора (сезоны):
+   нативный чекбокс сам по себе ~16-20px -- цель касания даёт вся строка,
+   не сам квадратик. */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  cursor: pointer;
+}
+.checkbox-row input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
 
 .pill {
   display: inline-flex;
@@ -213,23 +250,38 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
 .rating-row {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
+/* Кнопки шкалы: раньше это были жёсткие круги 34x34 под ОДНУ ЦИФРУ.
+   После перехода на именованные ступени (Spark/Kindling/Flame/Gem) слова
+   в круг не помещались и наезжали друг на друга. Теперь -- "таблетки",
+   которые растут по содержимому: фиксирована только высота, ширина
+   определяется словом. flex-wrap на .rating-row -- чтобы на узком экране
+   ступени переносились на вторую строку, а не сжимались в кашу. */
 .rating-zero, .rating-dot {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 17px;
   border: 1.5px solid var(--line);
   background: var(--paper-raised);
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  white-space: nowrap;
   color: var(--ink-soft);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 }
-.rating-zero { border-color: var(--brick); color: var(--brick); margin-right: var(--space-2); }
+/* 0 ("пошло иначе") -- запись ДРУГОГО РОДА, не низшая ступень шкалы:
+   отделяется цветом (brick вместо growth) и увеличенным отступом. */
+.rating-zero {
+  border-color: var(--brick);
+  color: var(--brick);
+  margin-right: var(--space-4);
+}
 .rating-zero.selected { background: var(--brick); color: var(--paper-raised); }
 .rating-dot.selected { background: var(--growth); border-color: var(--growth); color: var(--paper-raised); }
 .rating-dot[data-level="1"].selected { opacity: 0.55; }
@@ -242,8 +294,13 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3);
+  min-height: 44px;
   border-bottom: 1px solid var(--line);
   cursor: pointer;
+}
+.pill--tappable {
+  min-height: 32px;
+  padding: var(--space-2) var(--space-3);
 }
 .quality-search-result:hover { background: var(--growth-soft); }
 

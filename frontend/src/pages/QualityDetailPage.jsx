@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { growthStage } from '../lib/growthStage'
 import { useParams, Link } from 'react-router-dom'
 import { qualitiesApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
+import Sparkline from '../components/Sparkline'
+
+const TREND_ARROW = { rising: '↗', declining: '↘', steady: '→' }
+const SCORE_KEY = { 0: 'inverted', 1: 'spark', 2: 'kindling', 3: 'flame', 4: 'gem' }
 
 export default function QualityDetailPage() {
   const { t } = useTranslation()
@@ -18,68 +23,100 @@ export default function QualityDetailPage() {
   if (!data) return <CenterLoading />
 
   const { quality: q, recent_expressions: recent, by_context: byContext } = data
+  // recent приходит новое->старое (для списка); спарклайну нужен обратный
+  // порядок, чтобы линия читалась слева направо как течение времени.
+  const sparkPoints = [...recent].reverse().map((e) => ({ score: e.score }))
+  const trendArrow = q.trend ? TREND_ARROW[q.trend] : null
+  const maxContext = byContext.length ? Math.max(...byContext.map((c) => c.count)) : 0
 
   return (
     <div className="screen">
       <Link to="/qualities" style={{ fontSize: '0.85rem' }}>← {t('qualities.title')}</Link>
       <h1>{q.name.en}</h1>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <span className="pill">{q.dev_status_code}</span>
+        <span className="pill">{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
         {q.focus_code === 'current_focus' && <span className="pill pill--gold">{t('qualities.focus')}</span>}
       </div>
 
       <div className="card">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
           <div>
             <div className="eyebrow">{t('qualities.average')}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', lineHeight: 1.1 }}>
               {q.avg_score_all_time != null ? Number(q.avg_score_all_time).toFixed(1) : '—'}
+              {trendArrow && (
+                <span
+                  className={`trend-${q.trend === 'rising' ? 'up' : q.trend === 'declining' ? 'down' : 'flat'}`}
+                  style={{ fontSize: '1.1rem', marginLeft: 6 }}
+                  aria-label={t(`stats.trend.${q.trend}`)}
+                >
+                  {trendArrow}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+              {q.trend ? t(`stats.trend.${q.trend}`) : '—'}
             </div>
           </div>
-          <div>
-            <div className="eyebrow">{t('qualities.trend')}</div>
-            <div>{q.trend ? t(`stats.trend.${q.trend}`) : '—'}</div>
-          </div>
-        </div>
-        <div style={{ marginTop: 8, fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
-          {q.stability ? t(`stats.stability.${q.stability}`) : '—'}
-          {' · '}
-          {q.confidence ? t(`stats.confidence.${q.confidence}`) : '—'}
+          {/* Спарклайну нужно минимум 2 точки -- компонент сам возвращает
+              null на меньшем, так что условие здесь только ради того, чтобы
+              не резервировать пустое место в раскладке зря. */}
+          {sparkPoints.length >= 2 && <Sparkline points={sparkPoints} width={140} height={40} />}
         </div>
       </div>
 
-      {q.expression_count > 0 && (
-        <div className="eyebrow" style={{ marginTop: -8, marginBottom: 16 }}>
-          {t('stats.growth_basis', { count: q.expression_count })}
-          {q.inversion_count > 0 && (
-            <>
-              {' · '}
-              {t(q.inversion_count === 1 ? 'stats.inversions_count_one' : 'stats.inversions_count_other',
-                 { count: q.inversion_count })}
-            </>
-          )}
-        </div>
-      )}
+      {/* Честность про уверенность (§4.1): при малых данных прямо говорим
+          об этом, а не подставляем среднее по двум точкам как факт. */}
+      <div className="eyebrow" style={{ marginTop: 8, marginBottom: 16 }}>
+        {q.confidence === 'no_data' || q.confidence === 'very_limited'
+          ? t('stats.growth_basis', { count: q.expression_count })
+          : `${t(`stats.stability.${q.stability}`)} · ${t(`stats.confidence.${q.confidence}`)}`}
+        {q.inversion_count > 0 && (
+          <>
+            {' · '}
+            {t(q.inversion_count === 1 ? 'stats.inversions_count_one' : 'stats.inversions_count_other',
+               { count: q.inversion_count })}
+          </>
+        )}
+      </div>
 
       <h3>{t('qualities.recentExpressions')}</h3>
       {recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recent.map((e) => (
-        <div key={e.action_id + e.occurred_at} className="card" style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div key={e.action_id + e.occurred_at} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div>{e.action_name}</div>
             <span className="eyebrow">{e.occurred_at}</span>
+            {e.comment && <div style={{ fontSize: '0.85rem', marginTop: 4 }}>{e.comment}</div>}
           </div>
-          <span>{e.score}</span>
+          <span className={`pill${e.score === 0 ? ' pill--brick' : ''}`}>
+            {t(`rating.${SCORE_KEY[e.score]}.name`)}
+          </span>
         </div>
       ))}
 
-      <h3>{t('qualities.byContext')}</h3>
-      {byContext.map((c) => (
-        <div key={c.context_id ?? 'none'} className="card" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>{c.context_label || '—'}</span>
-          <span>{c.count} · {Number(c.avg_score).toFixed(1)}</span>
-        </div>
-      ))}
+      {byContext.length > 0 && (
+        <>
+          <h3>{t('qualities.byContext')}</h3>
+          {byContext.map((c) => (
+            <div key={c.context_id ?? 'none'} className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span>{c.context_label || '—'}</span>
+                <span className="eyebrow">{c.count} · {Number(c.avg_score).toFixed(1)}</span>
+              </div>
+              {/* Горизонтальная полоса -- относительно самого частого
+                  контекста, не абсолютная шкала: показывает "где чаще",
+                  а не претендует на точную пропорцию по всем данным. */}
+              <div style={{ height: 4, background: 'var(--line)', borderRadius: 2 }}>
+                <div style={{
+                  height: '100%', borderRadius: 2, background: 'var(--growth)',
+                  width: `${maxContext ? (c.count / maxContext) * 100 : 0}%`,
+                }} />
+              </div>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   )
 }
