@@ -4,8 +4,8 @@ import { useParams, Link } from 'react-router-dom'
 import { get } from '../api/client'
 import { qualitiesApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
+import { SCORE_KEY } from '../lib/displayMaps'
 
-const SCORE_KEY = { 0: 'inverted', 1: 'spark', 2: 'kindling', 3: 'flame', 4: 'gem' }
 
 /** Карточка одного действия -- бэкенд (GET /actions/{id} и
  * /actions/{id}/expressions) был готов давно, экрана не было вообще:

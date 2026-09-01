@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 import { reflectionsApi, goalsApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { REFLECTION_FIELDS } from '../lib/reflectionFields'
+import { REFLECTION_TYPE_KEY } from '../lib/displayMaps'
 
-const TYPE_KEY = { daily: 'reflections.typeDaily', weekly: 'reflections.typeWeekly', goal: 'reflections.typeGoal', cycle: 'reflections.typeCycle' }
 
 export default function ReflectionsListPage() {
   const { t } = useTranslation()
@@ -47,7 +47,7 @@ export default function ReflectionsListPage() {
             {r.occurred_at} ·{' '}
             {r.goal_id && goalNames[r.goal_id]
               ? goalNames[r.goal_id]
-              : t(TYPE_KEY[r.reflection_type_code] || r.reflection_type_code)}
+              : t(REFLECTION_TYPE_KEY[r.reflection_type_code] || r.reflection_type_code)}
           </div>
           {/* §13: полный текст всех заполненных полей, не одно усечённое --
               обратная связь с реального использования: последовательное

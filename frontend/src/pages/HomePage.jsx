@@ -3,11 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { analyticsApi, actionsApi } from '../api/resources'
 import { growthStage } from '../lib/growthStage'
+import { TREND_ARROW, TREND_CLASS } from '../lib/displayMaps'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { useAuth } from '../auth/AuthContext'
 
-const TREND_CLASS = { rising: 'trend-up', declining: 'trend-down', steady: 'trend-flat' }
-const TREND_ARROW = { rising: '↗', declining: '↘', steady: '→' }
 
 /** §4.3: "одно предложение-вывод вместо списка цифр... в Фазе 1 --
  * простейшее правило по имеющимся данным". Приоритет: сначала хорошая

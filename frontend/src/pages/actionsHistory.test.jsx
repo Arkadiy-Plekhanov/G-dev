@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { mintSession, setSession } from '../test/helpers'
@@ -28,8 +28,18 @@ describe('ActionsHistoryPage — cursor pagination, against the real backend', (
     const more = screen.getByRole('button', { name: /Show more/i })
     await user.click(more)
 
-    await screen.findByText('Action 20')
-    expect(screen.getAllByText(/^Action \d+$/).length).toBe(21)
+    // Ждать надо "Action 0", НЕ "Action 20": все 21 действие имеют одну
+    // дату, поэтому порядок -- created_at DESC, то есть "Action 20"
+    // (созданное последним) стоит ПЕРВЫМ на первой странице и находится
+    // мгновенно, ничего не дожидаясь. На второй странице реально только
+    // одно действие -- самое старое, "Action 0". Ожидание не того элемента
+    // делало проверку гонкой: на быстром бэкенде вторая страница успевала
+    // приехать до подсчёта, на медленном (Docker) -- нет, и тест падал
+    // с "expected 20 to be 21" на ровном месте.
+    await screen.findByText('Action 0')
+    await waitFor(() => {
+      expect(screen.getAllByText(/^Action \d+$/).length).toBe(21)
+    })
     // Дошли до конца -- кнопки больше нет вообще, это не бесконечная лента.
     expect(screen.queryByRole('button', { name: /Show more/i })).not.toBeInTheDocument()
   })

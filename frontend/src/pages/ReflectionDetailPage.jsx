@@ -5,9 +5,8 @@ import { reflectionsApi, qualitiesApi } from '../api/resources'
 import { get } from '../api/client'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { REFLECTION_FIELDS } from '../lib/reflectionFields'
+import { SCORE_KEY, REFLECTION_TYPE_KEY } from '../lib/displayMaps'
 
-const TYPE_KEY = { daily: 'reflections.typeDaily', weekly: 'reflections.typeWeekly', goal: 'reflections.typeGoal', cycle: 'reflections.typeCycle' }
-const SCORE_KEY = { 0: 'inverted', 1: 'spark', 2: 'kindling', 3: 'flame', 4: 'gem' }
 
 export default function ReflectionDetailPage() {
   const { t } = useTranslation()
@@ -45,7 +44,7 @@ export default function ReflectionDetailPage() {
   return (
     <div className="screen">
       <Link to={backTo} style={{ fontSize: '0.85rem' }}>← {t('common.back')}</Link>
-      <h1>{t(TYPE_KEY[reflection.reflection_type_code] || reflection.reflection_type_code)}</h1>
+      <h1>{t(REFLECTION_TYPE_KEY[reflection.reflection_type_code] || reflection.reflection_type_code)}</h1>
       <p className="eyebrow">{reflection.occurred_at}</p>
 
       {REFLECTION_FIELDS.filter(([key]) => reflection[key]).map(([key, labelKey]) => (

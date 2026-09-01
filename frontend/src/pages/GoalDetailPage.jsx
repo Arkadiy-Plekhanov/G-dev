@@ -4,12 +4,8 @@ import { useParams, Link } from 'react-router-dom'
 import { goalsApi, reflectionsApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { growthStage } from '../lib/growthStage'
+import { BASELINE } from '../lib/displayMaps'
 
-const BASELINE = {
-  above_usual: { key: 'goals.aboveUsual', trend: 'up' },
-  below_usual: { key: 'goals.belowUsual', trend: 'down' },
-  as_usual: { key: 'goals.asUsual', trend: 'flat' },
-}
 
 export default function GoalDetailPage() {
   const { t } = useTranslation()
@@ -59,13 +55,13 @@ export default function GoalDetailPage() {
           className="card card--tappable"
           style={{
             display: 'block', textDecoration: 'none', color: 'inherit',
-            borderLeft: `3px solid var(--${BASELINE[headline.vs_baseline].trend === 'up' ? 'growth' : BASELINE[headline.vs_baseline].trend === 'down' ? 'brick' : 'line'})`,
+            borderLeft: `3px solid var(${BASELINE[headline.vs_baseline].colorVar})`,
           }}
         >
           <div className="eyebrow">{headline.name.en}</div>
           <div style={{ fontSize: '1.05rem', marginTop: 2 }}>
-            <span className={`trend-${BASELINE[headline.vs_baseline].trend}`} style={{ marginRight: 6 }}>
-              {BASELINE[headline.vs_baseline].trend === 'up' ? '↗' : BASELINE[headline.vs_baseline].trend === 'down' ? '↘' : '→'}
+            <span className={BASELINE[headline.vs_baseline].trendClass} style={{ marginRight: 6 }}>
+              {BASELINE[headline.vs_baseline].arrow}
             </span>
             {t(BASELINE[headline.vs_baseline].key)}
           </div>

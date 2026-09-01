@@ -5,9 +5,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { qualitiesApi, catalogApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import Sparkline from '../components/Sparkline'
+import { SCORE_KEY, TREND_ARROW, TREND_CLASS } from '../lib/displayMaps'
 
-const TREND_ARROW = { rising: '↗', declining: '↘', steady: '→' }
-const SCORE_KEY = { 0: 'inverted', 1: 'spark', 2: 'kindling', 3: 'flame', 4: 'gem' }
 
 /** Единая карточка качества -- ЛИБО своя (с полной статистикой), ЛИБО ещё
  * не принятая (только определение + кнопка добавить). Раньше это были
@@ -100,7 +99,7 @@ export default function QualityDetailPage() {
               {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
               {trendArrow && (
                 <span
-                  className={`trend-${q.trend === 'rising' ? 'up' : q.trend === 'declining' ? 'down' : 'flat'}`}
+                  className={TREND_CLASS[q.trend] || 'trend-flat'}
                   style={{ fontSize: '1.1rem', marginLeft: 6 }}
                   aria-label={t(`stats.trend.${q.trend}`)}
                 >
