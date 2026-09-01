@@ -104,6 +104,10 @@ class UserQualityOut(BaseModel):
     id: str
     catalog_quality_id: str
     name: dict            # из catalog_qualities, для отображения без второго запроса
+    definition: dict      # оттуда же: карточка качества показывает определение
+                          # и для принятого качества, не только для нового --
+                          # иначе для «своих» качеств она выглядела бы иначе,
+                          # чем для остальных, а это одна и та же карточка
     focus_code: str
     dev_status_code: str
     current_level: Optional[int]

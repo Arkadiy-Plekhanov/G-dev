@@ -11,7 +11,7 @@ from app.schemas import UserQualityManualIn, UserQualityOut
 router = APIRouter(prefix="/qualities", tags=["qualities"])
 
 _SELECT = """
-    SELECT uq.id, uq.catalog_quality_id, cq.name, uq.focus_code, uq.dev_status_code,
+    SELECT uq.id, uq.catalog_quality_id, cq.name, cq.definition, uq.focus_code, uq.dev_status_code,
            uq.current_level, uq.source,
            qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.stability, qs.confidence,
            qs.last_expressed_at, qs.expression_count, qs.inversion_count, qs.inversion_count_30d

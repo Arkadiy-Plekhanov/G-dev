@@ -27,51 +27,66 @@ export default function QualityDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
-  const [notOwned, setNotOwned] = useState(null)
   const [error, setError] = useState(null)
-  const [adopting, setAdopting] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
-    setData(null)
-    setNotOwned(null)
+  // :id может быть ЛИБО id принятого качества (uq.id), ЛИБО
+  // catalog_quality_id -- для человека это одна и та же «карточка этого
+  // качества», и оба варианта должны открываться. Сперва пробуем как
+  // принятое (быстрый путь для всех существующих ссылок в приложении),
+  // при QUALITY_NOT_FOUND -- ищем в каталоге.
+  function load() {
     setError(null)
-    qualitiesApi.overview(id).then(setData).catch((e) => {
-      if (e.code !== 'QUALITY_NOT_FOUND') { setError(e); return }
-      catalogApi.qualities()
-        .then((catalog) => {
-          const found = catalog.find((c) => c.id === id)
-          found ? setNotOwned(found) : setError(e)
-        })
-        .catch(() => setError(e))
-    })
-  }, [id])
+    return qualitiesApi.overview(id)
+      .then(setData)
+      .catch((e) => {
+        if (e.code !== 'QUALITY_NOT_FOUND') { setError(e); return }
+        return catalogApi.qualities().then((catalog) => {
+          const c = catalog.find((x) => x.id === id)
+          if (!c) { setError(e); return }
+          // Приводим к той же форме, что и overview: одна вёрстка ниже
+          // не должна знать, «принято» качество или нет -- статистики
+          // просто ещё нет, и это честный ноль, а не другой экран.
+          setData({
+            quality: { ...c, catalog_quality_id: c.id, focus_code: 'not_in_focus', expression_count: 0 },
+            recent_expressions: [],
+            by_context: [],
+          })
+        }).catch(() => setError(e))
+      })
+  }
 
-  async function adopt() {
-    setAdopting(true)
+  useEffect(() => { setData(null); load() }, [id])
+
+  const inFocus = data?.quality?.focus_code === 'current_focus'
+
+  async function toggleFocus() {
+    setBusy(true)
     setError(null)
     try {
-      const uq = await qualitiesApi.adopt({ catalog_quality_id: id, focus_code: 'current_focus' })
-      navigate(`/qualities/${uq.id}`, { replace: true })
+      const q = data.quality
+      if (inFocus) {
+        // Убрать из фокуса, а не «удалить качество»: сам каталог у всех
+        // общий, удалять из него нечего.
+        await qualitiesApi.update(q.id, { focus_code: 'not_in_focus' })
+        await load()
+      } else if (q.id === q.catalog_quality_id) {
+        // Строки user_qualities ещё нет -- создаём молча. Для человека
+        // это просто «добавил в фокус», никакого «принятия» он не видит.
+        const uq = await qualitiesApi.adopt({ catalog_quality_id: q.catalog_quality_id, focus_code: 'current_focus' })
+        navigate(`/qualities/${uq.id}`, { replace: true })
+      } else {
+        await qualitiesApi.update(q.id, { focus_code: 'current_focus' })
+        await load()
+      }
     } catch (e) {
       setError(e)
-      setAdopting(false)
+    } finally {
+      setBusy(false)
     }
   }
 
   if (error) return <div className="screen"><ErrorBanner error={error} /></div>
-
-  if (notOwned) {
-    return (
-      <div className="screen">
-        <Link to="/qualities" style={{ fontSize: '0.85rem' }}>← {t('qualities.title')}</Link>
-        <h1>{notOwned.name.en}</h1>
-        <p>{notOwned.definition.en}</p>
-        <button className="btn btn-primary" onClick={adopt} disabled={adopting} style={{ width: '100%' }}>
-          {adopting ? t('common.loading') : t('onboarding.selectThis')}
-        </button>
-      </div>
-    )
-  }
 
   if (!data) return <CenterLoading />
 
@@ -80,59 +95,72 @@ export default function QualityDetailPage() {
   // порядок, чтобы линия читалась слева направо как течение времени.
   const sparkPoints = [...recent].reverse().map((e) => ({ score: e.score }))
   const trendArrow = q.trend ? TREND_ARROW[q.trend] : null
+  // Есть ли вообще на чём строить статистику: хоть одно проявление
+  // (ступень роста или обратное). Ноль -- показывать нечего.
+  const hasStats = (q.expression_count ?? 0) > 0 || (q.inversion_count ?? 0) > 0
   const maxContext = byContext.length ? Math.max(...byContext.map((c) => c.count)) : 0
 
   return (
     <div className="screen">
       <Link to="/qualities" style={{ fontSize: '0.85rem' }}>← {t('qualities.title')}</Link>
       <h1>{q.name.en}</h1>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <span className="pill">{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
-        {q.focus_code === 'current_focus' && <span className="pill pill--gold">{t('qualities.focus')}</span>}
+      {q.definition?.en && <p>{q.definition.en}</p>}
+      {/* Переключатель фокуса вместо прежней кнопки «Select this quality».
+          «Принять качество» было лишней сущностью: каталог у всех один и
+          тот же, личное здесь ровно одно -- в фокусе оно или нет. Раньше
+          у непринятого качества была СВОЯ, другая вёрстка (название +
+          определение + кнопка), из-за чего одна и та же карточка
+          выглядела как «неизвестно откуда взявшаяся страница». */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" className={inFocus ? 'btn btn-secondary' : 'btn btn-primary'}
+                style={{ width: 'auto' }} disabled={busy} onClick={toggleFocus}>
+          {busy ? t('common.loading') : inFocus ? t('qualities.removeFromFocus') : t('qualities.addToFocus')}
+        </button>
       </div>
 
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-          <div>
-            <div className="eyebrow">{t('qualities.average')}</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', lineHeight: 1.1 }}>
-              {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
-              {trendArrow && (
-                <span
-                  className={TREND_CLASS[q.trend] || 'trend-flat'}
-                  style={{ fontSize: '1.1rem', marginLeft: 6 }}
-                  aria-label={t(`stats.trend.${q.trend}`)}
-                >
-                  {trendArrow}
-                </span>
-              )}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
-              {q.avg_score_all_time != null && `${Number(q.avg_score_all_time).toFixed(1)} · `}
-              {q.trend ? t(`stats.trend.${q.trend}`) : '—'}
+      {/* Блок статистики -- только когда есть на чём её строить. У
+          качества без единого проявления он раньше показывал
+          «Not yet sparked» крупно, под ним «Not enough data yet», а
+          рядом «AVERAGE ACROSS 0 GROWTH ENTRIES» -- три способа сказать
+          «данных нет» и ни одного полезного. Теперь пусто значит пусто:
+          ниже просто «Nothing logged yet». */}
+      {hasStats && (
+        <>
+          <div className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+              <div>
+                <div className="eyebrow">{t('qualities.average')}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', lineHeight: 1.1 }}>
+                  {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
+                  {trendArrow && (
+                    <span className={TREND_CLASS[q.trend] || 'trend-flat'}
+                          style={{ fontSize: '1.1rem', marginLeft: 6 }}
+                          aria-label={t(`stats.trend.${q.trend}`)}>
+                      {trendArrow}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+                  {q.avg_score_all_time != null && `${Number(q.avg_score_all_time).toFixed(1)}`}
+                  {q.trend && ` · ${t(`stats.trend.${q.trend}`)}`}
+                </div>
+              </div>
+              {sparkPoints.length >= 2 && <Sparkline points={sparkPoints} width={140} height={40} />}
             </div>
           </div>
-          {/* Спарклайну нужно минимум 2 точки -- компонент сам возвращает
-              null на меньшем, так что условие здесь только ради того, чтобы
-              не резервировать пустое место в раскладке зря. */}
-          {sparkPoints.length >= 2 && <Sparkline points={sparkPoints} width={140} height={40} />}
-        </div>
-      </div>
 
-      {/* Честность про уверенность (§4.1): при малых данных прямо говорим
-          об этом, а не подставляем среднее по двум точкам как факт. */}
-      <div className="eyebrow" style={{ marginTop: 8, marginBottom: 16 }}>
-        {q.confidence === 'no_data' || q.confidence === 'very_limited'
-          ? t('stats.growth_basis', { count: q.expression_count })
-          : `${t(`stats.stability.${q.stability}`)} · ${t(`stats.confidence.${q.confidence}`)}`}
-        {q.inversion_count > 0 && (
-          <>
-            {' · '}
-            {t(q.inversion_count === 1 ? 'stats.inversions_count_one' : 'stats.inversions_count_other',
-               { count: q.inversion_count })}
-          </>
-        )}
-      </div>
+          <div className="eyebrow" style={{ marginTop: 8, marginBottom: 16 }}>
+            {t('stats.growth_basis', { count: q.expression_count })}
+            {q.inversion_count > 0 && (
+              <>
+                {' · '}
+                {t(q.inversion_count === 1 ? 'stats.inversions_count_one' : 'stats.inversions_count_other',
+                   { count: q.inversion_count })}
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       <h3>{t('qualities.recentExpressions')}</h3>
       {recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
