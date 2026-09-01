@@ -29,7 +29,7 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     // поддерживает qualities: [], см. test_atomic_action_without_qualities_still_works).
     expect(saveButton.disabled).toBe(false)
 
-    await user.click(screen.getByRole('button', { name: /Add a quality/i }))
+    await user.click(screen.getByRole('button', { name: /Search all qualities/i }))
     await user.click(await screen.findByText(quality.name.en))
 
     // Качество добавлено, но ещё НЕ оценено -- вот теперь сохранить нельзя.
@@ -44,7 +44,7 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     render(<MemoryRouter><LogActionPage /></MemoryRouter>)
 
     await user.type(screen.getByPlaceholderText(/Describe what you did/i), 'Ran a difficult negotiation')
-    await user.click(screen.getByRole('button', { name: /Add a quality/i }))
+    await user.click(screen.getByRole('button', { name: /Search all qualities/i }))
     await user.click(await screen.findByText(quality.name.en))
     await user.click(screen.getByLabelText(/^Gem/))
     await user.click(screen.getByRole('button', { name: /Save action/i }))
@@ -69,7 +69,7 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     render(<MemoryRouter><LogActionPage /></MemoryRouter>)
 
     await user.type(screen.getByPlaceholderText(/Describe what you did/i), 'Lost my temper')
-    await user.click(screen.getByRole('button', { name: /Add a quality/i }))
+    await user.click(screen.getByRole('button', { name: /Search all qualities/i }))
     await user.click(await screen.findByText(quality.name.en))
     await user.click(screen.getByLabelText(/Went the other way/))
 

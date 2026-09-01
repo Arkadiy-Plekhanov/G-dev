@@ -73,7 +73,7 @@ export default function ManualPage() {
         const isAdopted = adopted.has(c.id)
         return (
           <div key={c.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Link to={`/catalog/${c.id}`} style={{ textDecoration: 'none', color: 'inherit', minWidth: 0 }}>
+            <Link to={`/qualities/${c.id}`} style={{ textDecoration: 'none', color: 'inherit', minWidth: 0 }}>
               <strong>{c.name.en}</strong>
               <p style={{ margin: 0, fontSize: '0.85rem' }}>{c.definition.en}</p>
             </Link>

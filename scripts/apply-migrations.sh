@@ -93,6 +93,9 @@ MIGRATIONS=(
   "09_remove_is_relevant.sql"
   "10_named_growth_scale.sql"
   "12_seed_full_catalog.py"
+  "13_add_goal_reflection_type.sql"
+  "14_expose_goal_path_ids.sql"
+  "15_reflection_action_link.sql"
 )
 
 for m in "${MIGRATIONS[@]}"; do

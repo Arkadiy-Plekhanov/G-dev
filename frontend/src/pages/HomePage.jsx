@@ -62,15 +62,15 @@ export default function HomePage() {
       )}
 
       {focus && focus.map((q) => (
-        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable" style={{ display: 'flex', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit' }}>
-          <span>{q.name.en}</span>
-          <span className={TREND_CLASS[q.trend] || 'trend-flat'}>
-            {t(`stats.stage.${growthStage(q) ?? 'none'}`)}
+        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+          <div className="stat-row-name">{q.name.en}</div>
+          <div className={`stat-row-details ${TREND_CLASS[q.trend] || 'trend-flat'}`}>
+            <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
             {q.avg_score_all_time != null && (
-              <span className="eyebrow" style={{ marginLeft: 4 }}>{Number(q.avg_score_all_time).toFixed(1)}</span>
+              <span className="eyebrow">{Number(q.avg_score_all_time).toFixed(1)}</span>
             )}
-            {TREND_ARROW[q.trend] && <span style={{ marginLeft: 4 }}>{TREND_ARROW[q.trend]}</span>}
-          </span>
+            {TREND_ARROW[q.trend] && <span>{TREND_ARROW[q.trend]}</span>}
+          </div>
         </Link>
       ))}
 
@@ -80,10 +80,10 @@ export default function HomePage() {
       </div>
       {recent && recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recent && recent.map((a) => (
-        <div key={a.id} className="card">
+        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
           <div>{a.name}</div>
           <div className="eyebrow" style={{ marginTop: 4 }}>{a.occurred_at}</div>
-        </div>
+        </Link>
       ))}
     </div>
   )

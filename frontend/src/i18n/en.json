@@ -74,7 +74,11 @@
     "qualitiesHere": "Qualities that showed up here",
     "aboveUsual": "above usual",
     "belowUsual": "below usual",
-    "asUsual": "as usual"
+    "asUsual": "as usual",
+    "inThisGoal": "in this goal: {{avg}}",
+    "combinedWithSubgoals": "Combined with {{count}} subgoals",
+    "subgoals": "Subgoals",
+    "ownActions": "{{count}} own"
   },
   "qualities": {
     "title": "My qualities",
@@ -176,7 +180,7 @@
     "inversions_count_other": "{{count}} times it went the other way",
     "growth_basis": "Average across {{count}} growth entries",
     "stage": {
-      "none": "not enough data yet",
+      "none": "Not yet sparked",
       "spark": "Spark · emerging",
       "kindling": "Kindling · developing",
       "flame": "Flame · established",
@@ -240,7 +244,9 @@
     "aboutGoal": "Reflect on this goal",
     "aboutSeason": "About this season",
     "reflectToday": "Reflect on today",
-    "atLeastOneField": "Fill in at least one field to save."
+    "atLeastOneField": "Fill in at least one field to save.",
+    "typeGoal": "Goal",
+    "qualitiesShown": "Which qualities showed up?"
   },
   "actionsHistory": {
     "title": "History",

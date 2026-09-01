@@ -74,7 +74,14 @@ describe('goal overview card, against the real backend', () => {
     expect(screen.getByText('Ran the kickoff')).toBeInTheDocument()
     expect(screen.queryByText('Unrelated slip')).not.toBeInTheDocument() // не эта цель
 
-    expect(screen.getByText(/Gem/i)).toBeInTheDocument() // growthStage(4.0) -- именованная стадия, не голое число
-    expect(screen.getByText(/above usual/i)).toBeInTheDocument() // только в баннере-заголовке: в списке эта же плашка подавлена для качества-заголовка, чтобы не дублировать
+    // Единственное качество в сценарии -- оно же заголовочное (above_usual).
+    // §12 (обратная связь с реального использования): заголовок и список
+    // не должны повторять одно и то же качество -- список теперь полностью
+    // ИСКЛЮЧАЕТ качество-заголовок, а не просто прячет его плашку сравнения
+    // (как было раньше). При единственном качестве это означает, что вся
+    // секция "Qualities that showed up here" не отрисовывается вообще --
+    // и это стоит проверить явно, а не просто обойти стороной.
+    expect(screen.getByText(/above usual/i)).toBeInTheDocument() // только в баннере-заголовке
+    expect(screen.queryByRole('heading', { name: /Qualities that showed up here/i })).not.toBeInTheDocument()
   })
 })

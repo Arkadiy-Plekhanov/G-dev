@@ -142,6 +142,25 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
   border-color: var(--growth);
 }
 
+/* Строка "название + несколько кусков статистики" (стадия, деталь,
+   сравнительная плашка) -- вертикальный стек, а не justify-content:
+   space-between в одну строку. С space-between, когда название длинное
+   ("Sense of Rhythm") переносится на две строки, а справа при этом
+   несколько элементов -- ничто не гарантирует между ними визуального
+   разрыва: подпись и статистика в реальном использовании слипались в один
+   текст без пробела. Вертикальный стек не может слипнуться в принципе:
+   обе части не соревнуются за одну и ту же горизонтальную полосу, высота
+   строки просто растёт под содержимое. */
+.stat-row-name {
+  margin-bottom: var(--space-2);
+}
+.stat-row-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

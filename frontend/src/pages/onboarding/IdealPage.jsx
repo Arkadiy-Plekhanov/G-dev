@@ -46,7 +46,7 @@ export default function IdealPage() {
         <h3>{t('onboarding.idealComposition')}</h3>
         <div className="card">
           {selected.qualities.map((q) => (
-            <Link key={q.quality.id} to={`/catalog/${q.quality.id}`} style={{ display: 'block', padding: '6px 0', color: 'inherit', textDecoration: 'none' }}>
+            <Link key={q.quality.id} to={`/qualities/${q.quality.id}`} style={{ display: 'block', padding: '6px 0', color: 'inherit', textDecoration: 'none' }}>
               {q.quality.name.en}
             </Link>
           ))}

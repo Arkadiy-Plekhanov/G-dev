@@ -61,4 +61,20 @@ describe('OnboardingGate — regression for the redirect-loop found in manual te
     // запроса qualitiesApi.list(), только локальное обновление состояния.
     expect(resources.qualitiesApi.list).toHaveBeenCalledTimes(1)
   })
+
+  it('/qualities/... is exempt from the onboarding redirect even with zero qualities -- clicking a catalog quality during selection must not bounce back to "Who do you want to become" (found via manual testing)', async () => {
+    vi.spyOn(resources.qualitiesApi, 'list').mockResolvedValue([]) // ещё ничего не принято -- ровно момент выбора в онбординге
+    render(
+      <MemoryRouter initialEntries={['/qualities/some-catalog-quality-id']}>
+        <OnboardingGate>
+          <Routes>
+            <Route path="/qualities/:id" element={<div>quality card</div>} />
+            <Route path="/onboarding" element={<div>onboarding screen</div>} />
+          </Routes>
+        </OnboardingGate>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByText('quality card')).toBeInTheDocument()
+    expect(screen.queryByText('onboarding screen')).not.toBeInTheDocument()
+  })
 })

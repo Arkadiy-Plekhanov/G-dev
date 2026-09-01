@@ -1,25 +1,79 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { growthStage } from '../lib/growthStage'
-import { useParams, Link } from 'react-router-dom'
-import { qualitiesApi } from '../api/resources'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { qualitiesApi, catalogApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import Sparkline from '../components/Sparkline'
 
 const TREND_ARROW = { rising: '↗', declining: '↘', steady: '→' }
 const SCORE_KEY = { 0: 'inverted', 1: 'spark', 2: 'kindling', 3: 'flame', 4: 'gem' }
 
+/** Единая карточка качества -- ЛИБО своя (с полной статистикой), ЛИБО ещё
+ * не принятая (только определение + кнопка добавить). Раньше это были
+ * ДВЕ отдельные страницы (QualityDetailPage и CatalogQualityPage) --
+ * реальная обратная связь: "какая-то новая, неизвестно откуда взятая
+ * страница... а мог быть переход на карту качества сразу (зачем плодить
+ * сущности?)". :id принимает id ЛИБО принятого качества (uq.id), ЛИБО
+ * catalog_quality_id ещё не принятого -- это разные id-пространства, но
+ * маршрут для человека один и тот же: "карточка этого качества".
+ *
+ * Механизм: сперва пробуем как принятое (быстрый путь, как раньше, без
+ * лишнего запроса для всех уже существующих ссылок в приложении). Если
+ * бэкенд честно отвечает QUALITY_NOT_FOUND -- это может значить не
+ * "качества не существует", а "принятого качества с таким id нет", и
+ * тогда пробуем найти id в каталоге как ещё не принятое. */
 export default function QualityDetailPage() {
   const { t } = useTranslation()
   const { id } = useParams()
+  const navigate = useNavigate()
   const [data, setData] = useState(null)
+  const [notOwned, setNotOwned] = useState(null)
   const [error, setError] = useState(null)
+  const [adopting, setAdopting] = useState(false)
 
   useEffect(() => {
-    qualitiesApi.overview(id).then(setData).catch(setError)
+    setData(null)
+    setNotOwned(null)
+    setError(null)
+    qualitiesApi.overview(id).then(setData).catch((e) => {
+      if (e.code !== 'QUALITY_NOT_FOUND') { setError(e); return }
+      catalogApi.qualities()
+        .then((catalog) => {
+          const found = catalog.find((c) => c.id === id)
+          found ? setNotOwned(found) : setError(e)
+        })
+        .catch(() => setError(e))
+    })
   }, [id])
 
+  async function adopt() {
+    setAdopting(true)
+    setError(null)
+    try {
+      const uq = await qualitiesApi.adopt({ catalog_quality_id: id, focus_code: 'current_focus' })
+      navigate(`/qualities/${uq.id}`, { replace: true })
+    } catch (e) {
+      setError(e)
+      setAdopting(false)
+    }
+  }
+
   if (error) return <div className="screen"><ErrorBanner error={error} /></div>
+
+  if (notOwned) {
+    return (
+      <div className="screen">
+        <Link to="/qualities" style={{ fontSize: '0.85rem' }}>← {t('qualities.title')}</Link>
+        <h1>{notOwned.name.en}</h1>
+        <p>{notOwned.definition.en}</p>
+        <button className="btn btn-primary" onClick={adopt} disabled={adopting} style={{ width: '100%' }}>
+          {adopting ? t('common.loading') : t('onboarding.selectThis')}
+        </button>
+      </div>
+    )
+  }
+
   if (!data) return <CenterLoading />
 
   const { quality: q, recent_expressions: recent, by_context: byContext } = data
@@ -84,7 +138,7 @@ export default function QualityDetailPage() {
       <h3>{t('qualities.recentExpressions')}</h3>
       {recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recent.map((e) => (
-        <div key={e.action_id + e.occurred_at} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link key={e.action_id + e.occurred_at} to={`/actions/${e.action_id}`} className="card card--tappable" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
           <div>
             <div>{e.action_name}</div>
             <span className="eyebrow">{e.occurred_at}</span>
@@ -93,7 +147,7 @@ export default function QualityDetailPage() {
           <span className={`pill${e.score === 0 ? ' pill--brick' : ''}`}>
             {t(`rating.${SCORE_KEY[e.score]}.name`)}
           </span>
-        </div>
+        </Link>
       ))}
 
       {byContext.length > 0 && (

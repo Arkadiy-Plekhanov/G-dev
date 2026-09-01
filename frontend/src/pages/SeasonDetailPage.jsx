@@ -97,10 +97,10 @@ export default function SeasonDetailPage() {
       <h3>{t('seasons.actionsInPeriod')}</h3>
       {actions.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {actions.map((a) => (
-        <div key={a.id} className="card">
+        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
           <div>{a.name}</div>
           <div className="eyebrow" style={{ marginTop: 4 }}>{a.occurred_at}</div>
-        </div>
+        </Link>
       ))}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 16 }}>

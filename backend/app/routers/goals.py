@@ -62,7 +62,16 @@ def get_goal_overview(goal_id: str, user_id: str = Depends(get_current_user_id))
     исходного Excel (лист «Аналитика», блок «Карточка цели»): сама цель +
     последние действия + качества, проявившиеся под этой целью, со
     сравнением средней оценки «в рамках этой цели» с обычной средней
-    качества (порог ±0.3, как в исходной Excel-формуле)."""
+    качества (порог ±0.3, как в исходной Excel-формуле).
+
+    Дополнительно (обратная связь с реального использования): если у цели
+    есть подцели, добавляется subtree -- та же качественная разбивка, но
+    ОБЪЕДИНЁННАЯ по этой цели и всем её потомкам вместе (рекурсивно, через
+    goal_hierarchy.path_ids), и children -- краткая статистика по каждой
+    ПРЯМОЙ подцели отдельно, чтобы было видно, откуда именно складывается
+    общая картина. Для целей без подцелей subtree/children не считаются
+    вообще -- иначе это была бы точная копия уже показанных чисел, шум без
+    новой информации."""
     with get_conn(user_id) as cur:
         cur.execute(_SELECT + " WHERE g.id = %s", (goal_id,))
         goal = cur.fetchone()
@@ -100,7 +109,59 @@ def get_goal_overview(goal_id: str, user_id: str = Depends(get_current_user_id))
         )
         qualities = cur.fetchall()
 
-    return {"goal": goal, "recent_actions": recent_actions, "qualities": qualities}
+        subtree = None
+        children = []
+        if goal["child_goal_count"] and goal["child_goal_count"] > 0:
+            cur.execute(
+                """WITH subtree_ids AS (
+                       SELECT id FROM goal_hierarchy WHERE %(goal_id)s = ANY(path_ids)
+                   ),
+                   per_subtree AS (
+                       SELECT qe.quality_id, count(*) AS count_in_goal, avg(qe.score) AS avg_in_goal
+                       FROM quality_expressions qe
+                       JOIN actions a ON a.id = qe.action_id
+                       WHERE a.goal_id IN (SELECT id FROM subtree_ids)
+                       GROUP BY qe.quality_id
+                   )
+                   SELECT
+                       (SELECT count(*) FROM actions WHERE goal_id IN (SELECT id FROM subtree_ids)) AS action_count,
+                       (SELECT count(*) FROM subtree_ids) - 1 AS descendant_goal_count,
+                       (
+                           SELECT COALESCE(jsonb_agg(row_to_json(x) ORDER BY x.count_in_goal DESC), '[]'::jsonb)
+                           FROM (
+                               SELECT cq.id AS catalog_quality_id, uq.id AS quality_id, cq.name,
+                                      ps.count_in_goal, ps.avg_in_goal, qs.avg_score_all_time,
+                                      CASE WHEN qs.avg_score_all_time IS NULL THEN NULL
+                                           WHEN ps.avg_in_goal > qs.avg_score_all_time + 0.3 THEN 'above_usual'
+                                           WHEN ps.avg_in_goal < qs.avg_score_all_time - 0.3 THEN 'below_usual'
+                                           ELSE 'as_usual' END AS vs_baseline
+                               FROM per_subtree ps
+                               JOIN user_qualities uq ON uq.id = ps.quality_id
+                               JOIN catalog_qualities cq ON cq.id = uq.catalog_quality_id
+                               LEFT JOIN quality_stats qs ON qs.quality_id = ps.quality_id
+                               LIMIT 10
+                           ) x
+                       ) AS qualities""",
+                {"goal_id": goal_id},
+            )
+            subtree = cur.fetchone()
+
+            # Прямые подцели по отдельности -- краткая статистика каждой,
+            # чтобы было видно, откуда складывается subtree выше. Не
+            # рекурсивно (только уровень ниже): собственная карточка
+            # каждой подцели -- уже полноценный /goals/{id}/overview,
+            # дублировать её содержимое здесь незачем.
+            cur.execute(
+                """SELECT g.id, g.name, g.status_code,
+                          (SELECT count(*) FROM actions a WHERE a.goal_id = g.id) AS action_count,
+                          (SELECT count(*) FROM goals c WHERE c.parent_id = g.id) AS child_goal_count
+                   FROM goals g WHERE g.parent_id = %s ORDER BY g.name""",
+                (goal_id,),
+            )
+            children = cur.fetchall()
+
+    return {"goal": goal, "recent_actions": recent_actions, "qualities": qualities,
+            "subtree": subtree, "children": children}
 
 
 @router.patch("/{goal_id}", response_model=GoalOut)

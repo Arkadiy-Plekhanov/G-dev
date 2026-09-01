@@ -50,6 +50,9 @@ export default function LogActionPage() {
   }
 
   const excludeIds = new Set(selected.map((s) => s.userQualityId))
+  // Качества в фокусе, ещё не добавленные к ЭТОМУ действию -- то, что
+  // показывается сразу тапом без открытия поиска (§5 обратной связи).
+  const focusQualities = myQualities.filter((q) => q.focus_code === 'current_focus' && !excludeIds.has(q.id))
   const allRated = selected.length === 0 || selected.every((s) => s.score !== null)
   const canSave = name.trim().length > 0 && allRated && !saving
 
@@ -118,6 +121,23 @@ export default function LogActionPage() {
         </div>
       ))}
 
+      {/* Качества в фокусе -- видны сразу, тапом, без предварительного
+          открытия поиска (обратная связь с реального использования:
+          самый частый сценарий -- отметить что-то из уже выбранного
+          фокуса, а не искать по всем 160+). Поиск по всему каталогу
+          остаётся рядом отдельной кнопкой, не пропадает и не прячется --
+          просто не занимает экран по умолчанию, когда обычно нужен
+          именно фокус. */}
+      {focusQualities.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+          {focusQualities.map((q) => (
+            <button key={q.id} type="button" className="pill pill--tappable" style={{ cursor: 'pointer' }} onClick={() => addQuality(q)}>
+              + {q.name.en}
+            </button>
+          ))}
+        </div>
+      )}
+
       {picking ? (
         <QualityPicker
           myQualities={myQualities}
@@ -126,7 +146,7 @@ export default function LogActionPage() {
           onAdopted={(q) => setMyQualities((prev) => [...prev, q])}
         />
       ) : (
-        <button className="btn btn-secondary" onClick={() => setPicking(true)}>{t('action.addQuality')}</button>
+        <button className="btn btn-secondary" onClick={() => setPicking(true)}>{t('action.searchAllQualities')}</button>
       )}
 
       <button className="btn btn-primary" style={{ marginTop: 20 }} disabled={!canSave} onClick={save}>

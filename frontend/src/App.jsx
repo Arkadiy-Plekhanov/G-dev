@@ -18,7 +18,6 @@ import GoalsListPage from './pages/GoalsListPage'
 import GoalDetailPage from './pages/GoalDetailPage'
 import QualitiesListPage from './pages/QualitiesListPage'
 import QualityDetailPage from './pages/QualityDetailPage'
-import CatalogQualityPage from './pages/CatalogQualityPage'
 import SeasonsListPage from './pages/SeasonsListPage'
 import SeasonFormPage from './pages/SeasonFormPage'
 import SeasonDetailPage from './pages/SeasonDetailPage'
@@ -61,7 +60,13 @@ export function OnboardingGate({ children }) {
   }, [])
 
   if (hasQualities === null) return <CenterLoading />
-  if (!hasQualities && !location.pathname.startsWith('/onboarding')) {
+  // /qualities/... исключён из редиректа на онбординг намеренно: карточка
+  // качества (своей или ещё не принятой -- см. QualityDetailPage) должна
+  // открываться и ДО того, как принято хоть одно качество -- иначе клик
+  // по названию качества прямо на экране выбора (онбординг ManualPage/
+  // IdealPage) отбрасывает обратно на "Who do you want to become", не
+  // дав посмотреть карточку (реальный баг, пойманный по живому отчёту).
+  if (!hasQualities && !location.pathname.startsWith('/onboarding') && !location.pathname.startsWith('/qualities')) {
     return <Navigate to="/onboarding" replace />
   }
   return (
@@ -98,7 +103,6 @@ function AuthedApp() {
           <Route path="/goals/:id" element={<GoalDetailPage />} />
           <Route path="/qualities" element={<QualitiesListPage />} />
           <Route path="/qualities/:id" element={<QualityDetailPage />} />
-          <Route path="/catalog/:id" element={<CatalogQualityPage />} />
           <Route path="/cycles" element={<SeasonsListPage />} />
           <Route path="/cycles/new" element={<SeasonFormPage />} />
           <Route path="/cycles/:id" element={<SeasonDetailPage />} />

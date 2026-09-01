@@ -262,3 +262,130 @@ def test_quality_already_adopted_has_structured_code(scenario):
     r = client.post("/v1/qualities", json={"catalog_quality_id": same["id"]}, headers=h)
     assert r.status_code == 409
     assert r.json()["detail"]["code"] == "QUALITY_ALREADY_ADOPTED"
+
+
+# ---------- статистика по поддереву цели (родитель + подцели) ----------
+
+def test_goal_overview_includes_subtree_stats_when_it_has_children():
+    """Родитель с двумя подцелями: 1 действие на самом родителе, по 1 на
+    каждой подцели (3 в поддереве). subtree.action_count -- ОБЪЕДИНЁННЫЙ
+    счёт по родителю+подцелям вместе (обратная связь: "статистика в цели
+    может включать в себя объединённую статистику всех подцелей"), тогда
+    как goal.action_count остаётся ПРЯМЫМ счётом (не меняет уже
+    работающее поведение). children -- краткая статистика по каждой
+    ПРЯМОЙ подцели отдельно (обратная связь: "разбивка статистик подцелей
+    отдельно")."""
+    def fake_verify(id_token):
+        return {"iss": "https://accounts.google.com", "sub": f"subtree-{uuid.uuid4()}",
+                "email": f"subtree-{uuid.uuid4()}@example.com", "name": "Subtree Test",
+                "picture": None, "locale": "en"}
+    app.dependency_overrides[get_google_verifier] = lambda: fake_verify
+    client = TestClient(app)
+    login = client.post("/v1/auth/google", json={"id_token": "x"}).json()
+    h = {"Authorization": f"Bearer {login['access_token']}"}
+
+    parent = client.post("/v1/goals", json={"name": "Parent goal", "status_code": "active",
+                                             "priority_code": "p2_high"}, headers=h).json()
+    child1 = client.post("/v1/goals", json={"name": "Child A", "status_code": "active",
+                                             "priority_code": "p2_high", "parent_id": parent["id"]}, headers=h).json()
+    child2 = client.post("/v1/goals", json={"name": "Child B", "status_code": "active",
+                                             "priority_code": "p2_high", "parent_id": parent["id"]}, headers=h).json()
+
+    catalog = client.get("/v1/catalog/qualities", headers=h).json()
+    q = client.post("/v1/qualities", json={"catalog_quality_id": catalog[0]["id"],
+                                            "focus_code": "current_focus"}, headers=h).json()
+
+    client.post("/v1/actions/with-qualities", json={
+        "name": "On parent", "occurred_at": "2026-08-01", "goal_id": parent["id"],
+        "qualities": [{"quality_id": q["id"], "score": 3}]}, headers=h)
+    client.post("/v1/actions/with-qualities", json={
+        "name": "On child A", "occurred_at": "2026-08-02", "goal_id": child1["id"],
+        "qualities": [{"quality_id": q["id"], "score": 4}]}, headers=h)
+    client.post("/v1/actions/with-qualities", json={
+        "name": "On child B", "occurred_at": "2026-08-03", "goal_id": child2["id"],
+        "qualities": [{"quality_id": q["id"], "score": 2}]}, headers=h)
+
+    r = client.get(f"/v1/goals/{parent['id']}/overview", headers=h)
+    assert r.status_code == 200
+    body = r.json()
+
+    assert body["goal"]["action_count"] == 1  # прямые -- не меняем уже работающее
+    assert body["subtree"]["action_count"] == 3  # родитель + обе подцели вместе
+    assert body["subtree"]["descendant_goal_count"] == 2
+    assert float(body["subtree"]["qualities"][0]["avg_in_goal"]) == 3.0  # (3+4+2)/3
+
+    children_by_name = {c["name"]: c for c in body["children"]}
+    assert set(children_by_name) == {"Child A", "Child B"}
+    assert children_by_name["Child A"]["action_count"] == 1
+    assert children_by_name["Child B"]["action_count"] == 1
+
+    app.dependency_overrides.clear()
+
+
+def test_goal_overview_omits_subtree_for_a_leaf_goal(scenario):
+    """У цели без подцелей (обычный, самый частый случай) subtree/children
+    не считаются вообще -- иначе это была бы точная копия уже показанных
+    чисел, шум без новой информации."""
+    client, h, ctx = scenario
+    r = client.get(f"/v1/goals/{ctx['goal']['id']}/overview", headers=h)
+    body = r.json()
+    assert body["subtree"] is None
+    assert body["children"] == []
+
+
+# ---------- рефлексия ↔ действие (§1 обратной связи) ----------
+
+def test_reflection_with_qualities_atomically_creates_a_linked_action(scenario):
+    """"Рефлексия с указанием качеств — качества регистрируются с
+    привязкой к действию": POST /reflections с непустым qualities создаёт
+    ОДНОВРЕМЕННО рефлексию и действие (одна транзакция), а не только
+    рефлексию с текстовым полем. Название действия -- из insight
+    (самого содержательного поля), не голая дата."""
+    client, h, ctx = scenario
+    r = client.post("/v1/reflections", json={
+        "occurred_at": "2026-08-20", "reflection_type_code": "daily",
+        "insight": "Stayed calm under real pressure today",
+        "qualities": [{"quality_id": ctx["quality"]["id"], "score": 4}],
+    }, headers=h)
+    assert r.status_code == 201
+    body = r.json()
+    assert body["action_id"] is not None
+
+    action = client.get(f"/v1/actions/{body['action_id']}", headers=h).json()
+    assert action["name"] == "Stayed calm under real pressure today"
+    assert action["occurred_at"] == "2026-08-20"
+
+    expressions = client.get(f"/v1/actions/{body['action_id']}/expressions", headers=h).json()
+    assert len(expressions) == 1
+    assert expressions[0]["quality_id"] == ctx["quality"]["id"]
+    assert expressions[0]["score"] == 4
+
+
+def test_reflection_without_qualities_creates_no_action(scenario):
+    """"рефлексия без качеств — отдельна": пустой список -- легитимное,
+    самостоятельное состояние, не "недоделанная" рефлексия. Никакого
+    действия не создаётся вообще, action_id остаётся null."""
+    client, h, _ = scenario
+    r = client.post("/v1/reflections", json={
+        "occurred_at": "2026-08-21", "reflection_type_code": "daily",
+        "insight": "Just thinking today, nothing to log",
+    }, headers=h)
+    assert r.status_code == 201
+    assert r.json()["action_id"] is None
+
+
+def test_reflection_with_qualities_rolls_back_atomically_on_bad_quality(scenario):
+    """Один и тот же приём, что и у /actions/with-qualities: если ХОТЬ ОДНО
+    качество в списке ссылается на чужой/несуществующий id, откатывается
+    ВСЁ -- ни рефлексия, ни действие, ни уже вставленные до сбоя
+    выражения качеств не остаются в базе частично."""
+    client, h, _ = scenario
+    r = client.post("/v1/reflections", json={
+        "occurred_at": "2026-08-22", "reflection_type_code": "daily",
+        "insight": "Should not be saved",
+        "qualities": [{"quality_id": str(uuid.uuid4()), "score": 3}],
+    }, headers=h)
+    assert r.status_code >= 400
+
+    mine = client.get("/v1/reflections", headers=h).json()
+    assert not any(x["insight"] == "Should not be saved" for x in mine)

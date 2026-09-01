@@ -255,6 +255,13 @@ class ReflectionIn(BaseModel):
     qualities_needing_attention_raw: Optional[str] = None
     what_stuck: Optional[str] = None
     next_cycle_change: Optional[str] = None
+    # §1 обратной связи: "рефлексия без качеств — отдельна, рефлексия с
+    # указанием качеств — качества регистрируются с привязкой к действию".
+    # Не персистится как колонка reflections -- используется только в
+    # момент создания, чтобы атомарно завести связанное action (см.
+    # create_reflection). Пустой список -- легитимная чистая рефлексия
+    # без залогированного поступка, не ошибка и не "забыли заполнить".
+    qualities: list[ExpressionIn] = []
 
 
 class ReflectionOut(BaseModel):
@@ -271,3 +278,4 @@ class ReflectionOut(BaseModel):
     qualities_needing_attention_raw: Optional[str]
     what_stuck: Optional[str]
     next_cycle_change: Optional[str]
+    action_id: Optional[str] = None
