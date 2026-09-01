@@ -29,7 +29,7 @@ export default function ReflectionsListPage() {
     <div className="screen">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>{t('reflections.title')}</h1>
-        <Link to="/reflections/new" className="btn btn-primary" style={{ textDecoration: 'none', padding: '8px 14px' }}>
+        <Link to="/reflections/new" className="btn btn-primary" style={{ padding: '8px 14px' }}>
           {t('reflections.new')}
         </Link>
       </div>
@@ -42,7 +42,7 @@ export default function ReflectionsListPage() {
       )}
 
       {reflections.map((r) => (
-        <Link key={r.id} to={`/reflections/${r.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={r.id} to={`/reflections/${r.id}`} className="card card--tappable card-link">
           <div className="eyebrow" style={{ marginBottom: 6 }}>
             {r.occurred_at} ·{' '}
             {r.goal_id && goalNames[r.goal_id]

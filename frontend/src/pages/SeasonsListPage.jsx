@@ -41,7 +41,7 @@ export default function SeasonsListPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>{t('seasons.title')}</h1>
         {!active && (
-          <Link to="/cycles/new" className="btn btn-primary" style={{ textDecoration: 'none', padding: '8px 14px' }}>
+          <Link to="/cycles/new" className="btn btn-primary" style={{ padding: '8px 14px' }}>
             {t('seasons.new')}
           </Link>
         )}
@@ -51,14 +51,14 @@ export default function SeasonsListPage() {
         <div className="empty-state">
           <p>{t('seasons.empty')}</p>
           <p style={{ fontSize: '0.85rem', marginBottom: 16 }}>{t('seasons.emptyHint')}</p>
-          <Link to="/cycles/new" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+          <Link to="/cycles/new" className="btn btn-primary" style={{ display: 'inline-block' }}>
             {t('seasons.startSeason')}
           </Link>
         </div>
       )}
 
       {active && (
-        <Link to={`/cycles/${active.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block', borderLeft: '3px solid var(--growth)' }}>
+        <Link to={`/cycles/${active.id}`} className="card card--tappable card-link" style={{ borderLeft: '3px solid var(--growth)' }}>
           <span className="pill pill--gold" style={{ marginBottom: 6, display: 'inline-block' }}>{t('seasons.active')}</span>
           <div style={{ fontSize: '1.1rem' }}>{active.name}</div>
           <div className="eyebrow" style={{ marginTop: 4 }}>{active.start_date} → {active.end_date || '…'}</div>
@@ -66,7 +66,7 @@ export default function SeasonsListPage() {
       )}
 
       {rest.map((s) => (
-        <Link key={s.id} to={`/cycles/${s.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={s.id} to={`/cycles/${s.id}`} className="card card--tappable card-link">
           <div>{s.name}</div>
           <div className="eyebrow" style={{ marginTop: 4 }}>
             {s.start_date || '…'} → {s.end_date || '…'} · {s.status_code}

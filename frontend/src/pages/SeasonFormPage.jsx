@@ -105,7 +105,7 @@ export default function SeasonFormPage() {
       {isOneActiveConflict ? (
         <div className="error-banner">
           {t('errors.ONE_ACTIVE_CYCLE_ALREADY_EXISTS')}
-          <Link to="/cycles" className="btn btn-secondary" style={{ display: 'block', marginTop: 8, textAlign: 'center', textDecoration: 'none' }}>
+          <Link to="/cycles" className="btn btn-secondary" style={{ display: 'block', marginTop: 8, textAlign: 'center' }}>
             {t('seasons.viewActive')}
           </Link>
         </div>

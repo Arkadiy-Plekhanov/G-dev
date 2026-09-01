@@ -246,7 +246,9 @@
     "reflectToday": "Reflect on today",
     "atLeastOneField": "Fill in at least one field to save.",
     "typeGoal": "Goal",
-    "qualitiesShown": "Which qualities showed up?"
+    "qualitiesShown": "Which qualities showed up?",
+    "qualitiesNeedingAttention": "Qualities needing attention",
+    "qualitiesNeedingAttentionPlaceholder": "Which ones want more work?"
   },
   "actionsHistory": {
     "title": "History",

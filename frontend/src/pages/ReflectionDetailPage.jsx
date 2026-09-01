@@ -58,7 +58,7 @@ export default function ReflectionDetailPage() {
         <>
           <h3>{t('action.qualitiesShown')}</h3>
           {expressions.map((e) => (
-            <Link key={e.id} to={`/qualities/${e.quality_id}`} className="card card--tappable" style={{ display: 'flex', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit' }}>
+            <Link key={e.id} to={`/qualities/${e.quality_id}`} className="card card--tappable card-link card-link--row">
               <span>{qualityNames[e.quality_id] || '…'}</span>
               <span className={`pill${e.score === 0 ? ' pill--brick' : ''}`}>{t(`rating.${SCORE_KEY[e.score]}.name`)}</span>
             </Link>

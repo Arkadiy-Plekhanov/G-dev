@@ -53,8 +53,8 @@ export default function GoalsListPage() {
       {goals.length === 0 && !showForm && <p className="empty-state">{t('goals.empty')}</p>}
 
       {goals.map((g) => (
-        <Link key={g.id} to={`/goals/${g.id}`} className="card card--tappable"
-              style={{ display: 'block', textDecoration: 'none', color: 'inherit', marginLeft: `${(g.level - 1) * 14}px` }}>
+        <Link key={g.id} to={`/goals/${g.id}`} className="card card--tappable card-link"
+              style={{ marginLeft: `${(g.level - 1) * 14}px` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <strong>{g.name}</strong>
             <span className="pill">{g.status_code}</span>

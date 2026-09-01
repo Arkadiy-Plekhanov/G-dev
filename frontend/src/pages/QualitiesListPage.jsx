@@ -55,7 +55,7 @@ export default function QualitiesListPage() {
       {qualities.length === 0 && !query && <p className="empty-state">{t('qualities.empty')}</p>}
 
       {mine.map((q) => (
-        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable card-link">
           <div className="stat-row-name">
             {q.name.en}
             {q.focus_code === 'current_focus' && <span className="eyebrow" style={{ marginLeft: 6 }}>{t('qualities.inFocus')}</span>}
@@ -73,7 +73,7 @@ export default function QualitiesListPage() {
         <div className="eyebrow" style={{ margin: '16px 0 8px' }}>{t('action.fromCatalog')}</div>
       )}
       {fromCatalog.map((cq) => (
-        <Link key={cq.id} to={`/qualities/${cq.id}`} className="card card--tappable" style={{ display: 'flex', justifyContent: 'space-between', textDecoration: 'none', color: 'inherit' }}>
+        <Link key={cq.id} to={`/qualities/${cq.id}`} className="card card--tappable card-link card-link--row">
           <span>{cq.name.en}</span>
           <span className="pill">{t('action.addToMine')}</span>
         </Link>

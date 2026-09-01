@@ -81,7 +81,7 @@ export default function SeasonDetailPage() {
         <>
           <h3>{t('seasons.qualities')}</h3>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {season.qualities.map((q) => <Link key={q.id} to={`/qualities/${q.id}`} className="pill pill--tappable" style={{ textDecoration: 'none' }}>{q.name.en}</Link>)}
+            {season.qualities.map((q) => <Link key={q.id} to={`/qualities/${q.id}`} className="pill pill--tappable">{q.name.en}</Link>)}
           </div>
         </>
       )}
@@ -89,7 +89,7 @@ export default function SeasonDetailPage() {
         <>
           <h3>{t('seasons.goals')}</h3>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {season.goals.map((g) => <Link key={g.id} to={`/goals/${g.id}`} className="pill pill--tappable" style={{ textDecoration: 'none' }}>{g.name}</Link>)}
+            {season.goals.map((g) => <Link key={g.id} to={`/goals/${g.id}`} className="pill pill--tappable">{g.name}</Link>)}
           </div>
         </>
       )}
@@ -97,7 +97,7 @@ export default function SeasonDetailPage() {
       <h3>{t('seasons.actionsInPeriod')}</h3>
       {actions.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {actions.map((a) => (
-        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable card-link">
           <div>{a.name}</div>
           <div className="eyebrow" style={{ marginTop: 4 }}>{a.occurred_at}</div>
         </Link>
@@ -108,7 +108,7 @@ export default function SeasonDetailPage() {
         <Link to={`/reflections/new?cycle_id=${id}`} style={{ fontSize: '0.85rem' }}>{t('seasons.addReflection')}</Link>
       </div>
       {reflections.map((r) => (
-        <Link key={r.id} to={`/reflections/${r.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={r.id} to={`/reflections/${r.id}`} className="card card--tappable card-link">
           <div className="eyebrow">{r.occurred_at} · {t(`reflections.type${r.reflection_type_code.charAt(0).toUpperCase()}${r.reflection_type_code.slice(1)}`)}</div>
           {r.insight && <div style={{ marginTop: 4 }}>{r.insight}</div>}
         </Link>
@@ -122,7 +122,7 @@ export default function SeasonDetailPage() {
       )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
-        <Link to={`/cycles/${id}/edit`} className="btn btn-secondary" style={{ textDecoration: 'none', textAlign: 'center', flex: 1 }}>
+        <Link to={`/cycles/${id}/edit`} className="btn btn-secondary" style={{ textAlign: 'center', flex: 1 }}>
           {t('common.edit')}
         </Link>
         <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleDelete} disabled={deleting}>

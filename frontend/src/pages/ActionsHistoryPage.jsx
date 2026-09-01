@@ -64,7 +64,7 @@ export default function ActionsHistoryPage() {
         <div key={day} style={{ marginBottom: 20 }}>
           <div className="eyebrow" style={{ marginBottom: 8 }}>{day}</div>
           {dayActions.map((a) => (
-            <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable card-link">
               <div>{a.name}</div>
               {a.avg_score != null && (
                 <div className="eyebrow" style={{ marginTop: 4 }}>

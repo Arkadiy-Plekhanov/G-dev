@@ -11,6 +11,7 @@ export const REFLECTION_FIELDS = [
   ['what_worked', 'reflections.whatWorked'],
   ['what_did_not_work', 'reflections.whatDidNotWork'],
   ['qualities_observed_raw', 'reflections.qualitiesObserved'],
+  ['qualities_needing_attention_raw', 'reflections.qualitiesNeedingAttention'],
   ['insight', 'reflections.insight'],
   ['what_to_change', 'reflections.whatToChange'],
   ['what_stuck', 'reflections.whatStuck'],

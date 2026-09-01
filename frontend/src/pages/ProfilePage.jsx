@@ -53,13 +53,13 @@ export default function ProfilePage() {
       <ErrorBanner error={error} />
 
       <h2>{t('profile.more')}</h2>
-      <Link to="/cycles" className="card card--tappable" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+      <Link to="/cycles" className="card card--tappable card-link">
         {t('profile.seasons')}
       </Link>
-      <Link to="/reflections" className="card card--tappable" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+      <Link to="/reflections" className="card card--tappable card-link">
         {t('profile.reflections')}
       </Link>
-      <Link to="/actions" className="card card--tappable" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+      <Link to="/actions" className="card card--tappable card-link">
         {t('profile.history')}
       </Link>
 

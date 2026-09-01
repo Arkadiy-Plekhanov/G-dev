@@ -137,7 +137,7 @@ export default function QualityDetailPage() {
       <h3>{t('qualities.recentExpressions')}</h3>
       {recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recent.map((e) => (
-        <Link key={e.action_id + e.occurred_at} to={`/actions/${e.action_id}`} className="card card--tappable" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+        <Link key={e.action_id + e.occurred_at} to={`/actions/${e.action_id}`} className="card card--tappable card-link card-link--row">
           <div>
             <div>{e.action_name}</div>
             <span className="eyebrow">{e.occurred_at}</span>

@@ -37,7 +37,8 @@ export default function ReflectionFormPage() {
   const [type, setType] = useState(cycleId ? 'cycle' : (goalId ? 'goal' : 'daily'))
 
   const [fields, setFields] = useState({
-    what_worked: '', what_did_not_work: '', qualities_observed_raw: '', insight: '',
+    what_worked: '', what_did_not_work: '', qualities_observed_raw: '',
+    qualities_needing_attention_raw: '', insight: '',
     what_to_change: '', what_stuck: '', next_cycle_change: '',
   })
   const [myQualities, setMyQualities] = useState([])
@@ -168,6 +169,10 @@ export default function ReflectionFormPage() {
             <div className="field">
               <label>{t('reflections.qualitiesObserved')}</label>
               <textarea value={fields.qualities_observed_raw} onChange={(e) => setField('qualities_observed_raw', e.target.value)} placeholder={t('reflections.qualitiesObservedPlaceholder')} />
+            </div>
+            <div className="field">
+              <label>{t('reflections.qualitiesNeedingAttention')}</label>
+              <textarea value={fields.qualities_needing_attention_raw} onChange={(e) => setField('qualities_needing_attention_raw', e.target.value)} placeholder={t('reflections.qualitiesNeedingAttentionPlaceholder')} />
             </div>
             <div className="field">
               <label>{t('reflections.whatToChange')}</label>

@@ -138,6 +138,27 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
   cursor: pointer;
   transition: border-color 0.15s ease;
 }
+
+/* Карточка, которая одновременно ссылка. Раньше на каждом таком <Link>
+   висел один и тот же инлайн-стиль (textDecoration/color/display) --
+   23 повторения в 12 файлах: любая правка внешнего вида ссылок-карточек
+   требовала обойти их все и ничего не забыть. Здесь же живут display и
+   сброс типографики ссылки, чтобы на месте оставались только те стили,
+   которые для конкретной карточки действительно особенные. */
+.card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+/* Строка «слева название, справа значение» -- второй по частоте
+   повторявшийся инлайн-стиль. */
+.card-link--row,
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
 .card--tappable:hover, .card--tappable:focus-visible {
   border-color: var(--growth);
 }
@@ -162,6 +183,10 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
 }
 
 .btn {
+  /* .btn и .pill регулярно вешаются на <Link>, а не только на <button>:
+     сброс подчёркивания живёт здесь, чтобы не повторять
+     style={{ textDecoration: 'none' }} на каждом таком вызове. */
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -211,6 +236,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
 .checkbox-row input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
 
 .pill {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   padding: 2px var(--space-2);

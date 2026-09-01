@@ -41,10 +41,10 @@ export default function HomePage() {
       <div className="eyebrow">{t('home.greeting')}</div>
       <h1>{user?.display_name || ''}</h1>
 
-      <Link to="/log" className="btn btn-primary" style={{ textDecoration: 'none', marginBottom: 12 }}>
+      <Link to="/log" className="btn btn-primary" style={{ marginBottom: 12 }}>
         {t('home.logAction')}
       </Link>
-      <Link to="/reflections/new" className="btn btn-secondary" style={{ textDecoration: 'none', marginBottom: 24, textAlign: 'center' }}>
+      <Link to="/reflections/new" className="btn btn-secondary" style={{ marginBottom: 24, textAlign: 'center' }}>
         {t('home.reflectPrompt')}
       </Link>
 
@@ -61,7 +61,7 @@ export default function HomePage() {
       )}
 
       {focus && focus.map((q) => (
-        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable card-link">
           <div className="stat-row-name">{q.name.en}</div>
           <div className={`stat-row-details ${TREND_CLASS[q.trend] || 'trend-flat'}`}>
             <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
@@ -79,7 +79,7 @@ export default function HomePage() {
       </div>
       {recent && recent.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recent && recent.map((a) => (
-        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable card-link">
           <div>{a.name}</div>
           <div className="eyebrow" style={{ marginTop: 4 }}>{a.occurred_at}</div>
         </Link>

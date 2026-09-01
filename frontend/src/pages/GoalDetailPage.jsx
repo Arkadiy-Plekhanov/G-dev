@@ -52,11 +52,8 @@ export default function GoalDetailPage() {
       {headline && (
         <Link
           to={`/qualities/${headline.quality_id}`}
-          className="card card--tappable"
-          style={{
-            display: 'block', textDecoration: 'none', color: 'inherit',
-            borderLeft: `3px solid var(${BASELINE[headline.vs_baseline].colorVar})`,
-          }}
+          className="card card--tappable card-link"
+          style={{ borderLeft: `3px solid var(${BASELINE[headline.vs_baseline].colorVar})` }}
         >
           <div className="eyebrow">{headline.name.en}</div>
           <div style={{ fontSize: '1.05rem', marginTop: 2 }}>
@@ -71,7 +68,7 @@ export default function GoalDetailPage() {
       <h3>{t('goals.recentActions')}</h3>
       {recentActions.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recentActions.map((a) => (
-        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        <Link key={a.id} to={`/actions/${a.id}`} className="card card--tappable card-link">
           <div>{a.name}</div>
           <div className="eyebrow" style={{ marginTop: 4 }}>{a.occurred_at}</div>
         </Link>
@@ -81,7 +78,7 @@ export default function GoalDetailPage() {
         <>
           <h3>{t('goals.qualitiesHere')}</h3>
           {qualities.filter((q) => q.quality_id !== headline?.quality_id).map((q) => (
-            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link">
               <div className="stat-row-name">{q.name.en}</div>
               <div className="stat-row-details">
                 {/* Стадия -- по ОБЩЕЙ статистике качества (avg_score_all_time),
@@ -115,7 +112,7 @@ export default function GoalDetailPage() {
         <>
           <h3>{t('goals.combinedWithSubgoals', { count: data.subtree.descendant_goal_count })}</h3>
           {data.subtree.qualities.map((q) => (
-            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link">
               <div className="stat-row-name">{q.name.en}</div>
               <div className="stat-row-details">
                 <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
@@ -131,7 +128,7 @@ export default function GoalDetailPage() {
 
           <h3>{t('goals.subgoals')}</h3>
           {data.children.map((c) => (
-            <Link key={c.id} to={`/goals/${c.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            <Link key={c.id} to={`/goals/${c.id}`} className="card card--tappable card-link">
               <div className="stat-row-name">{c.name}</div>
               <div className="stat-row-details">
                 <span className="pill">{c.status_code}</span>
@@ -151,7 +148,7 @@ export default function GoalDetailPage() {
         <>
           <h3>{t('reflections.title')}</h3>
           {reflections.map((r) => (
-            <Link key={r.id} to={`/reflections/${r.id}`} className="card card--tappable" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            <Link key={r.id} to={`/reflections/${r.id}`} className="card card--tappable card-link">
               <div className="eyebrow">{r.occurred_at}</div>
               {r.insight && <div style={{ marginTop: 4 }}>{r.insight}</div>}
             </Link>

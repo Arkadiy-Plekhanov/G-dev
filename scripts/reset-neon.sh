@@ -42,10 +42,16 @@ DSN="$NEON_ADMIN_URL" bash scripts/apply-migrations.sh
 echo "==> Проверка результата..."
 QUALITIES_COUNT=$(psql "$NEON_ADMIN_URL" -t -A -c "SELECT count(*) FROM catalog_qualities")
 IDEALS_COUNT=$(psql "$NEON_ADMIN_URL" -t -A -c "SELECT count(*) FROM ideals")
-echo "    catalog_qualities: $QUALITIES_COUNT (ожидается 25)"
+echo "    catalog_qualities: $QUALITIES_COUNT (ожидается 169)"
 echo "    ideals: $IDEALS_COUNT (ожидается 3)"
 
-if [ "$QUALITIES_COUNT" != "25" ] || [ "$IDEALS_COUNT" != "3" ]; then
+# 169 -- полный "Цветок духовных качеств" (миграция 12), не MVP-набор из
+# 25. Число сверяется с тем же инвариантом, что и в
+# backend/tests/test_catalog_ideals.py: расхождение означает, что сид
+# молча потерял или задвоил качества. Раньше здесь оставалось 25 -- то
+# есть после успешного применения ВСЕХ миграций скрипт всё равно упал бы
+# на проверке, и это выглядело бы как сбой миграции, хотя всё прошло верно.
+if [ "$QUALITIES_COUNT" != "169" ] || [ "$IDEALS_COUNT" != "3" ]; then
   echo "ВНИМАНИЕ: числа не совпадают с ожидаемыми -- несмотря на то что все команды формально прошли без ошибок." >&2
   exit 1
 fi
