@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { reflectionsApi, qualitiesApi } from '../api/resources'
 import { ErrorBanner } from '../components/Feedback'
-import QualityPicker from '../components/QualityPicker'
-import RatingControl from '../components/RatingControl'
+import QualityRatingList from '../components/QualityRatingList'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -48,7 +47,13 @@ export default function ReflectionFormPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    qualitiesApi.list().then(setMyQualities).catch(() => {})
+    qualitiesApi.list().then((q) => {
+      setMyQualities(q)
+      // Как и в LogActionPage: фокус-качества сразу строками с оценкой,
+      // без промежуточного «выбери чип». pinned -- не убираются крестиком.
+      setSelected(q.filter((x) => x.focus_code === 'current_focus')
+                   .map((x) => ({ userQualityId: x.id, name: x.name.en, score: null, comment: '', pinned: true })))
+    }).catch(() => {})
   }, [])
 
   function setField(key, value) {
@@ -68,10 +73,9 @@ export default function ReflectionFormPage() {
     setSelected((prev) => prev.map((s) => (s.userQualityId === userQualityId ? { ...s, score } : s)))
   }
 
-  const excludeIds = new Set(selected.map((s) => s.userQualityId))
-  const focusQualities = myQualities.filter((q) => q.focus_code === 'current_focus' && !excludeIds.has(q.id))
-  const allRated = selected.length === 0 || selected.every((s) => s.score !== null)
-  const hasAnyContent = Object.values(fields).some((v) => v.trim().length > 0) || selected.length > 0
+  // Оценка необязательна -- неоценённые качества не отправляются.
+  const rated = selected.filter((s) => s.score !== null)
+  const hasAnyContent = Object.values(fields).some((v) => v.trim().length > 0) || rated.length > 0
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -83,7 +87,7 @@ export default function ReflectionFormPage() {
       goal_id: goalId || null,
       cycle_id: cycleId || null,
       ...Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, v.trim() || null])),
-      qualities: selected.map((s) => ({ quality_id: s.userQualityId, score: s.score, comment: s.comment || null })),
+      qualities: rated.map((s) => ({ quality_id: s.userQualityId, score: s.score, comment: s.comment || null })),
     }
     try {
       const result = await reflectionsApi.create(payload)
@@ -136,33 +140,6 @@ export default function ReflectionFormPage() {
           <textarea value={fields.insight} onChange={(e) => setField('insight', e.target.value)} placeholder={t('reflections.insightPlaceholder')} />
         </div>
 
-        <div className="field">
-          <label>{t('reflections.qualitiesShown')}</label>
-          {selected.map((s) => (
-            <div key={s.userQualityId} className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <strong>{s.name}</strong>
-                <button type="button" className="btn btn-secondary" style={{ width: 'auto', padding: '2px 10px' }} onClick={() => removeQuality(s.userQualityId)}>✕</button>
-              </div>
-              <RatingControl value={s.score} onChange={(score) => setScore(s.userQualityId, score)} />
-            </div>
-          ))}
-          {focusQualities.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-              {focusQualities.map((q) => (
-                <button key={q.id} type="button" className="pill pill--tappable" style={{ cursor: 'pointer' }} onClick={() => addQuality(q)}>
-                  + {q.name.en}
-                </button>
-              ))}
-            </div>
-          )}
-          {picking ? (
-            <QualityPicker myQualities={myQualities} excludeIds={excludeIds} onPick={addQuality}
-                           onAdopted={(q) => setMyQualities((prev) => [...prev, q])} />
-          ) : (
-            <button type="button" className="btn btn-secondary" onClick={() => setPicking(true)}>{t('action.searchAllQualities')}</button>
-          )}
-        </div>
 
         {(type === 'weekly' || type === 'goal' || type === 'cycle') && (
           <>
@@ -193,11 +170,29 @@ export default function ReflectionFormPage() {
             </div>
           </>
         )}
+        {/* Качества -- ПОСЛЕ всех текстовых полей, а не в середине.
+            Раньше порядок был: текст, качества, снова текст -- рваная
+            последовательность, сбивавшая при заполнении (обратная связь
+            по скриншоту). Сначала человек описывает словами, что было,
+            потом отмечает, какие качества в этом проявились. */}
+        <div className="field">
+          <label>{t('reflections.qualitiesShown')}</label>
+          <QualityRatingList
+            rows={selected}
+            onSetScore={setScore}
+            onRemove={removeQuality}
+            myQualities={myQualities}
+            onPick={addQuality}
+            onAdopted={(q) => setMyQualities((prev) => [...prev, q])}
+            picking={picking}
+            onOpenPicker={() => setPicking(true)}
+          />
+        </div>
+
 
         {!hasAnyContent && <p className="eyebrow">{t('reflections.atLeastOneField')}</p>}
-        {!allRated && <p className="eyebrow">{t('action.rateHint')}</p>}
 
-        <button type="submit" className="btn btn-primary" disabled={saving || !hasAnyContent || !allRated} style={{ width: '100%' }}>
+        <button type="submit" className="btn btn-primary" disabled={saving || !hasAnyContent} style={{ width: '100%' }}>
           {saving ? t('common.loading') : t('reflections.save')}
         </button>
       </form>

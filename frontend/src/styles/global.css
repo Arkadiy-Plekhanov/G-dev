@@ -172,14 +172,35 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
    текст без пробела. Вертикальный стек не может слипнуться в принципе:
    обе части не соревнуются за одну и ту же горизонтальную полосу, высота
    строки просто растёт под содержимое. */
+/* Строка «название слева, статистика справа» -- в ОДНУ строку, как и
+   должно быть на мобильном, где вертикальное место дороже
+   горизонтального. Раньше здесь был вертикальный стек: он чинил
+   слипание текста, но ценой пустой правой половины экрана и лишней
+   строки на каждое качество -- регрессия, а не решение.
+   Слипание чинится правильно flex-правилами, а не переносом вниз:
+   min-width: 0 разрешает длинному названию переноситься ВНУТРИ своей
+   колонки (без него flex-элемент не сжимается меньше содержимого и
+   выталкивает соседа), а flex-shrink: 0 у правой части не даёт ей
+   сжаться в кашу. gap гарантирует зазор, которого не давал
+   justify-content: space-between. */
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
 .stat-row-name {
-  margin-bottom: var(--space-2);
+  flex: 1;
+  min-width: 0;
 }
 .stat-row-details {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-shrink: 0;
   gap: var(--space-2);
+  text-align: right;
 }
 
 .btn {

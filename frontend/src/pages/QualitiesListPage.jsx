@@ -5,42 +5,71 @@ import { Link } from 'react-router-dom'
 import { qualitiesApi, catalogApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 
-/** Библиотека качеств -- по умолчанию мои (как раньше, без регрессии для
- * тех, кто уже пользуется), поиск открывает ВЕСЬ каталог (169), не только
- * уже принятое (реальная обратная связь: "qualities page still doesn't
- * contain all qualities and shows only the one in focus"). Тот же
- * паттерн, что уже проверен в QualityPicker -- без запроса каталог не
- * вываливается целиком, это было бы избыточно на каждый заход на
- * страницу ради редкого случая "ищу что-то новое".
+/** Библиотека ВСЕХ качеств (169), а не только принятых.
  *
- * Непринятое качество ведёт на ту же единую карточку (/qualities/:id --
- * см. QualityDetailPage), где и живёт кнопка "добавить" -- список здесь
- * только показывает и ведёт, не дублирует логику принятия. */
+ * Раньше страница показывала только qualitiesApi.list() -- то есть у
+ * человека, принявшего 6 качеств на онбординге, «My qualities» вечно
+ * показывала ровно эти 6, и добавить новое было неоткуда (реальная
+ * обратная связь, повторявшаяся несколько раз). Теперь это полноценная
+ * библиотека: весь каталог, поиск по нему, и добавление/удаление из
+ * фокуса прямо в строке -- тем же паттерном, что уже работает на
+ * онбординге (ManualPage), а не своей отдельной реализацией.
+ *
+ * adoptedByCatalogId: catalog_quality_id -> принятое качество (со
+ * статистикой). Нужна именно карта, а не множество: для удаления нужен
+ * uq.id, для ссылки на карточку -- тоже он, а для непринятых -- id
+ * каталога. Это два разных id-пространства, и путать их нельзя. */
 export default function QualitiesListPage() {
   const { t } = useTranslation()
-  const [qualities, setQualities] = useState(null)
-  const [catalog, setCatalog] = useState([])
+  const [catalog, setCatalog] = useState(null)
+  const [adoptedByCatalogId, setAdopted] = useState(new Map())
   const [query, setQuery] = useState('')
+  const [busyId, setBusyId] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    qualitiesApi.list().then(setQualities).catch(setError)
-    catalogApi.qualities().then(setCatalog).catch(() => setCatalog([]))
+    Promise.all([catalogApi.qualities(), qualitiesApi.list()])
+      .then(([cat, mine]) => {
+        setCatalog(cat)
+        setAdopted(new Map(mine.map((q) => [q.catalog_quality_id, q])))
+      })
+      .catch(setError)
   }, [])
 
-  const { mine, fromCatalog } = useMemo(() => {
-    if (!qualities) return { mine: [], fromCatalog: [] }
+  const visible = useMemo(() => {
+    if (!catalog) return []
     const q = query.trim().toLowerCase()
-    const matches = (name) => !q || name.toLowerCase().includes(q)
-    const mineByCatalogId = new Set(qualities.map((mq) => mq.catalog_quality_id))
-    return {
-      mine: qualities.filter((mq) => matches(mq.name.en)),
-      fromCatalog: q ? catalog.filter((cq) => !mineByCatalogId.has(cq.id) && matches(cq.name.en)) : [],
-    }
-  }, [qualities, catalog, query])
+    const matched = catalog.filter((c) => !q || c.name.en.toLowerCase().includes(q))
+    // Свои -- наверх: это то, с чем человек работает каждый день, а
+    // остальные 160+ нужны заметно реже. Внутри групп -- алфавит,
+    // как в каталоге.
+    return [
+      ...matched.filter((c) => adoptedByCatalogId.has(c.id)),
+      ...matched.filter((c) => !adoptedByCatalogId.has(c.id)),
+    ]
+  }, [catalog, adoptedByCatalogId, query])
 
-  if (error) return <div className="screen"><ErrorBanner error={error} /></div>
-  if (!qualities) return <CenterLoading />
+  async function toggle(catalogQuality) {
+    setError(null)
+    setBusyId(catalogQuality.id)
+    try {
+      const existing = adoptedByCatalogId.get(catalogQuality.id)
+      if (existing) {
+        await qualitiesApi.remove(existing.id)
+        setAdopted((prev) => { const next = new Map(prev); next.delete(catalogQuality.id); return next })
+      } else {
+        const uq = await qualitiesApi.adopt({ catalog_quality_id: catalogQuality.id, focus_code: 'current_focus' })
+        setAdopted((prev) => new Map(prev).set(catalogQuality.id, uq))
+      }
+    } catch (e) {
+      setError(e)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  if (error && !catalog) return <div className="screen"><ErrorBanner error={error} /></div>
+  if (!catalog) return <CenterLoading />
 
   return (
     <div className="screen">
@@ -52,36 +81,36 @@ export default function QualitiesListPage() {
         onChange={(e) => setQuery(e.target.value)}
         style={{ width: '100%', padding: 10, border: '1px solid var(--line)', borderRadius: 6, marginBottom: 12 }}
       />
-      {qualities.length === 0 && !query && <p className="empty-state">{t('qualities.empty')}</p>}
+      <ErrorBanner error={error} />
+      {visible.length === 0 && <p className="empty-state">{t('action.noQualityMatches')}</p>}
 
-      {mine.map((q) => (
-        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable card-link">
-          <div className="stat-row-name">
-            {q.name.en}
-            {q.focus_code === 'current_focus' && <span className="eyebrow" style={{ marginLeft: 6 }}>{t('qualities.inFocus')}</span>}
+      {visible.map((c) => {
+        const mine = adoptedByCatalogId.get(c.id)
+        return (
+          <div key={c.id} className="card stat-row">
+            {/* Название ведёт на карточку качества: у принятого -- по
+                uq.id (там статистика), у непринятого -- по id каталога
+                (там определение и та же кнопка добавления). */}
+            <Link to={`/qualities/${mine ? mine.id : c.id}`} className="card-link stat-row-name">
+              <div>{c.name.en}</div>
+              {mine
+                ? <span className="eyebrow">{t(`stats.stage.${growthStage(mine) ?? 'none'}`)}
+                    {mine.avg_score_all_time != null && ` · ${Number(mine.avg_score_all_time).toFixed(1)}`}</span>
+                : <span className="eyebrow">{c.definition.en}</span>}
+            </Link>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ width: 'auto', flexShrink: 0 }}
+              disabled={busyId === c.id}
+              onClick={() => toggle(c)}
+              aria-label={mine ? t('qualities.removeFromFocus') : t('qualities.addToFocus')}
+            >
+              {mine ? '✓' : '+'}
+            </button>
           </div>
-          <div className="stat-row-details">
-            <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
-            {q.avg_score_all_time != null && (
-              <span className="eyebrow">{Number(q.avg_score_all_time).toFixed(1)}</span>
-            )}
-          </div>
-        </Link>
-      ))}
-
-      {fromCatalog.length > 0 && (
-        <div className="eyebrow" style={{ margin: '16px 0 8px' }}>{t('action.fromCatalog')}</div>
-      )}
-      {fromCatalog.map((cq) => (
-        <Link key={cq.id} to={`/qualities/${cq.id}`} className="card card--tappable card-link card-link--row">
-          <span>{cq.name.en}</span>
-          <span className="pill">{t('action.addToMine')}</span>
-        </Link>
-      ))}
-
-      {query && mine.length === 0 && fromCatalog.length === 0 && (
-        <p className="empty-state">{t('action.noQualityMatches')}</p>
-      )}
+        )
+      })}
     </div>
   )
 }

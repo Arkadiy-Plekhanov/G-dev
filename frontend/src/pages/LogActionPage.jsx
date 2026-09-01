@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { actionsApi, goalsApi, qualitiesApi } from '../api/resources'
 import { get } from '../api/client'
 import { ErrorBanner } from '../components/Feedback'
-import QualityPicker from '../components/QualityPicker'
-import RatingControl from '../components/RatingControl'
+import QualityRatingList from '../components/QualityRatingList'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -32,7 +31,14 @@ export default function LogActionPage() {
 
   useEffect(() => {
     Promise.all([goalsApi.list(), get('/reference/action-contexts'), qualitiesApi.list()])
-      .then(([g, c, q]) => { setGoals(g); setContexts(c); setMyQualities(q) })
+      .then(([g, c, q]) => {
+        setGoals(g); setContexts(c); setMyQualities(q)
+        // Фокус-качества сразу строками с оценкой -- без промежуточного
+        // шага «сначала выбери чип». pinned: их не убирают крестиком,
+        // они просто остаются неоценёнными, если не проявились.
+        setSelected(q.filter((x) => x.focus_code === 'current_focus')
+                     .map((x) => ({ userQualityId: x.id, name: x.name.en, score: null, comment: '', pinned: true })))
+      })
       .catch(setError)
   }, [])
 
@@ -49,12 +55,12 @@ export default function LogActionPage() {
     setSelected((prev) => prev.map((s) => (s.userQualityId === userQualityId ? { ...s, score } : s)))
   }
 
-  const excludeIds = new Set(selected.map((s) => s.userQualityId))
-  // Качества в фокусе, ещё не добавленные к ЭТОМУ действию -- то, что
-  // показывается сразу тапом без открытия поиска (§5 обратной связи).
-  const focusQualities = myQualities.filter((q) => q.focus_code === 'current_focus' && !excludeIds.has(q.id))
-  const allRated = selected.length === 0 || selected.every((s) => s.score !== null)
-  const canSave = name.trim().length > 0 && allRated && !saving
+  // Оценка НЕОБЯЗАТЕЛЬНА: неоценённые качества просто не отправляются.
+  // Раньше сохранение блокировалось, пока не оценено каждое показанное
+  // качество -- а показаны теперь все фокусные, то есть человек был бы
+  // обязан оценить всё подряд, включая непроявившееся.
+  const rated = selected.filter((s) => s.score !== null)
+  const canSave = name.trim().length > 0 && !saving
 
   async function save() {
     setError(null)
@@ -65,7 +71,7 @@ export default function LogActionPage() {
         occurred_at: occurredAt,
         goal_id: goalId || null,
         context_id: contextId ? Number(contextId) : null,
-        qualities: selected.map((s) => ({ quality_id: s.userQualityId, score: s.score, comment: s.comment || null })),
+        qualities: rated.map((s) => ({ quality_id: s.userQualityId, score: s.score, comment: s.comment || null })),
       })
       navigate('/', { replace: true })
     } catch (e) {
@@ -109,45 +115,16 @@ export default function LogActionPage() {
       <h3>{t('action.qualitiesShown')}</h3>
       <p style={{ fontSize: '0.85rem' }}>{t('action.rateHint')}</p>
 
-      {selected.length === 0 && <p className="empty-state" style={{ padding: 'var(--space-4)' }}>{t('action.noneSelectedYet')}</p>}
-
-      {selected.map((s) => (
-        <div key={s.userQualityId} className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <strong>{s.name}</strong>
-            <button className="btn btn-secondary" style={{ width: 'auto', padding: '2px 10px' }} onClick={() => removeQuality(s.userQualityId)}>✕</button>
-          </div>
-          <RatingControl value={s.score} onChange={(score) => setScore(s.userQualityId, score)} />
-        </div>
-      ))}
-
-      {/* Качества в фокусе -- видны сразу, тапом, без предварительного
-          открытия поиска (обратная связь с реального использования:
-          самый частый сценарий -- отметить что-то из уже выбранного
-          фокуса, а не искать по всем 160+). Поиск по всему каталогу
-          остаётся рядом отдельной кнопкой, не пропадает и не прячется --
-          просто не занимает экран по умолчанию, когда обычно нужен
-          именно фокус. */}
-      {focusQualities.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-          {focusQualities.map((q) => (
-            <button key={q.id} type="button" className="pill pill--tappable" style={{ cursor: 'pointer' }} onClick={() => addQuality(q)}>
-              + {q.name.en}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {picking ? (
-        <QualityPicker
-          myQualities={myQualities}
-          excludeIds={excludeIds}
-          onPick={addQuality}
-          onAdopted={(q) => setMyQualities((prev) => [...prev, q])}
-        />
-      ) : (
-        <button className="btn btn-secondary" onClick={() => setPicking(true)}>{t('action.searchAllQualities')}</button>
-      )}
+      <QualityRatingList
+        rows={selected}
+        onSetScore={setScore}
+        onRemove={removeQuality}
+        myQualities={myQualities}
+        onPick={addQuality}
+        onAdopted={(q) => setMyQualities((prev) => [...prev, q])}
+        picking={picking}
+        onOpenPicker={() => setPicking(true)}
+      />
 
       <button className="btn btn-primary" style={{ marginTop: 20 }} disabled={!canSave} onClick={save}>
         {saving ? t('common.loading') : t('action.save')}

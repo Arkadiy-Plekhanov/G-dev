@@ -40,7 +40,11 @@ export default function SeasonsListPage() {
     <div className="screen">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>{t('seasons.title')}</h1>
-        {!active && (
+        {/* Кнопка в шапке -- только когда список НЕ пуст. При пустом
+            списке ниже и так стоит призыв «Start a season», и две кнопки,
+            ведущие в одно и то же место, просто спорили друг с другом
+            (плюс верхняя наезжала на заголовок -- см. скриншот). */}
+        {!active && seasons.length > 0 && (
           <Link to="/cycles/new" className="btn btn-primary" style={{ padding: '8px 14px' }}>
             {t('seasons.new')}
           </Link>

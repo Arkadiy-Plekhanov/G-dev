@@ -18,7 +18,7 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     quality = await qualitiesApi.adopt({ catalog_quality_id: catalog[0].id, focus_code: 'current_focus' })
   })
 
-  it('allows saving a bare action with zero qualities, but blocks save once a quality is added and not yet rated', async () => {
+  it('rating is optional: an unrated quality never blocks saving, and simply is not recorded', async () => {
     const user = userEvent.setup()
     render(<MemoryRouter><LogActionPage /></MemoryRouter>)
 
@@ -32,8 +32,13 @@ describe('LogActionPage — the core daily-practice loop, against the real backe
     await user.click(screen.getByRole('button', { name: /Search all qualities/i }))
     await user.click(await screen.findByText(quality.name.en))
 
-    // Качество добавлено, но ещё НЕ оценено -- вот теперь сохранить нельзя.
-    expect(saveButton.disabled).toBe(true)
+    // Качество добавлено, но НЕ оценено -- сохранять по-прежнему можно.
+    // Раньше здесь блокировалось: но теперь на экране сразу показаны ВСЕ
+    // фокус-качества, и требование оценить каждое означало бы, что человек
+    // обязан проставить оценку всему подряд, включая непроявившееся.
+    // Неоценённое просто не отправляется на бэкенд -- это самый частый
+    // случай, а не «забыл заполнить».
+    expect(saveButton.disabled).toBe(false)
 
     await user.click(screen.getByLabelText(/^Flame/))
     expect(saveButton.disabled).toBe(false)

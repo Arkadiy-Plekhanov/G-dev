@@ -78,7 +78,7 @@ export default function GoalDetailPage() {
         <>
           <h3>{t('goals.qualitiesHere')}</h3>
           {qualities.filter((q) => q.quality_id !== headline?.quality_id).map((q) => (
-            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link">
+            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link stat-row">
               <div className="stat-row-name">{q.name.en}</div>
               <div className="stat-row-details">
                 {/* Стадия -- по ОБЩЕЙ статистике качества (avg_score_all_time),
@@ -112,7 +112,7 @@ export default function GoalDetailPage() {
         <>
           <h3>{t('goals.combinedWithSubgoals', { count: data.subtree.descendant_goal_count })}</h3>
           {data.subtree.qualities.map((q) => (
-            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link">
+            <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link stat-row">
               <div className="stat-row-name">{q.name.en}</div>
               <div className="stat-row-details">
                 <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
@@ -128,7 +128,7 @@ export default function GoalDetailPage() {
 
           <h3>{t('goals.subgoals')}</h3>
           {data.children.map((c) => (
-            <Link key={c.id} to={`/goals/${c.id}`} className="card card--tappable card-link">
+            <Link key={c.id} to={`/goals/${c.id}`} className="card card--tappable card-link stat-row">
               <div className="stat-row-name">{c.name}</div>
               <div className="stat-row-details">
                 <span className="pill">{c.status_code}</span>

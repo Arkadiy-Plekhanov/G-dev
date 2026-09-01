@@ -26,18 +26,20 @@ export default function QualityPicker({ myQualities, excludeIds, onPick, onAdopt
     catalogApi.qualities().then(setCatalog).catch(() => setCatalog([]))
   }, [])
 
-  const { focus, rest, fromCatalog } = useMemo(() => {
+  const { rest, fromCatalog } = useMemo(() => {
     const q = query.trim().toLowerCase()
     const available = myQualities.filter((mq) => !excludeIds.has(mq.id))
     const matches = (name) => !q || name.toLowerCase().includes(q)
     const mineByCatalogId = new Set(myQualities.map((mq) => mq.catalog_quality_id))
 
     return {
-      focus: available.filter((mq) => mq.focus_code === 'current_focus' && matches(mq.name.en)),
+      // Фокус-качества здесь НЕ показываются: они и так уже все на экране
+      // строками с оценкой (см. QualityRatingList). Раньше поиск дублировал
+      // ровно тот же список, что виден выше -- то есть «поиск по всем 169»
+      // на деле показывал те же шесть фокусных, и смысл поиска пропадал
+      // (повторявшаяся обратная связь). Здесь -- только то, чего на экране
+      // ещё нет: свои внефокусные и весь остальной каталог.
       rest: available.filter((mq) => mq.focus_code !== 'current_focus' && matches(mq.name.en)),
-      // Только то, чего у пользователя ещё нет -- иначе одно и то же
-      // качество показалось бы дважды. Без поискового запроса каталог не
-      // вываливается целиком: сначала свои, каталог -- по запросу.
       fromCatalog: q
         ? catalog.filter((cq) => !mineByCatalogId.has(cq.id) && matches(cq.name.en))
         : [],
@@ -59,7 +61,7 @@ export default function QualityPicker({ myQualities, excludeIds, onPick, onAdopt
     }
   }
 
-  const nothingAtAll = focus.length + rest.length + fromCatalog.length === 0
+  const nothingAtAll = rest.length + fromCatalog.length === 0
 
   return (
     <div className="card">
@@ -73,12 +75,6 @@ export default function QualityPicker({ myQualities, excludeIds, onPick, onAdopt
       {error && <p className="error-text">{error}</p>}
       {nothingAtAll && <p style={{ margin: '8px 0' }}>{t('action.noQualityMatches')}</p>}
 
-      {focus.map((mq) => (
-        <div key={mq.id} className="quality-search-result" onClick={() => onPick(mq)}>
-          <span>{mq.name.en}</span>
-          <span className="pill">{t('qualities.inFocus')}</span>
-        </div>
-      ))}
       {rest.map((mq) => (
         <div key={mq.id} className="quality-search-result" onClick={() => onPick(mq)}>
           <span>{mq.name.en}</span>

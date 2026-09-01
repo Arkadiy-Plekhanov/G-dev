@@ -52,7 +52,7 @@
     "qualitiesShown": "Which qualities showed up?",
     "addQuality": "Add a quality",
     "noneSelectedYet": "None selected yet — add the qualities that actually showed up.",
-    "rateHint": "Rate 0–4. 0 means the quality was relevant but showed up in reverse — not that it didn't happen.",
+    "rateHint": "Rate the ones that actually showed up — leave the rest blank.",
     "save": "Save action",
     "saved": "Saved",
     "searchAllQualities": "Search all qualities…",
@@ -92,7 +92,9 @@
     "focus": "Focus",
     "status": "Status",
     "inFocus": "focus",
-    "viewMyProgress": "View my progress"
+    "viewMyProgress": "View my progress",
+    "addToFocus": "Add to focus",
+    "removeFromFocus": "Remove from focus"
   },
   "profile": {
     "title": "Profile",
@@ -114,7 +116,8 @@
     "delete": "Delete",
     "back": "Back",
     "saving": "saving…",
-    "edit": "Edit"
+    "edit": "Edit",
+    "remove": "Remove"
   },
   "errors": {
     "GOAL_NOT_FOUND": "That goal no longer exists.",

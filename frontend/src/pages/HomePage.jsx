@@ -61,7 +61,7 @@ export default function HomePage() {
       )}
 
       {focus && focus.map((q) => (
-        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable card-link">
+        <Link key={q.id} to={`/qualities/${q.id}`} className="card card--tappable card-link stat-row">
           <div className="stat-row-name">{q.name.en}</div>
           <div className={`stat-row-details ${TREND_CLASS[q.trend] || 'trend-flat'}`}>
             <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>

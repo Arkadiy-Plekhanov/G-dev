@@ -93,7 +93,11 @@ describe('Reflections — type and binding follow the entry point, against the r
     renderAt('/reflections/new')
     // Качество в фокусе видно сразу тапом, тот же паттерн, что и в
     // LogActionPage (§5 обратной связи) -- не нужно открывать поиск.
-    await user.click(await screen.findByText(`+ ${quality.name.en}`))
+    // Качество в фокусе теперь показано СРАЗУ строкой с оценкой -- без
+    // промежуточного шага «сначала натыкать чип, потом оценить». Ждём
+    // само название (строка появляется, как только загрузился список
+    // качеств), и ставим оценку одним действием.
+    await screen.findByText(quality.name.en)
     await user.click(screen.getByRole('radio', { name: /Flame/i }))
     await user.click(screen.getByRole('button', { name: /Save reflection/i }))
 
