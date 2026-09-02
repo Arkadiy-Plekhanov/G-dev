@@ -96,6 +96,7 @@ MIGRATIONS=(
   "13_add_goal_reflection_type.sql"
   "14_expose_goal_path_ids.sql"
   "15_reflection_action_link.sql"
+  "16_drop_manual_level_fields.sql"
 )
 
 for m in "${MIGRATIONS[@]}"; do

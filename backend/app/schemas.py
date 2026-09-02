@@ -92,8 +92,6 @@ class UserQualityManualIn(BaseModel):
     catalog_quality_id: str
     dev_priority_code: str = "p3_normal"
     focus_code: str = "not_in_focus"
-    dev_status_code: str = "undeveloped"
-    current_level: Optional[int] = Field(default=None, ge=0, le=4)
 
 
 class AdoptIdealIn(BaseModel):
@@ -109,8 +107,6 @@ class UserQualityOut(BaseModel):
                           # иначе для «своих» качеств она выглядела бы иначе,
                           # чем для остальных, а это одна и та же карточка
     focus_code: str
-    dev_status_code: str
-    current_level: Optional[int]
     source: str
     avg_score_all_time: Optional[float] = None
     avg_score_30d: Optional[float] = None

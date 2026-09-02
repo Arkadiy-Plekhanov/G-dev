@@ -16,7 +16,7 @@ def current_focus(user_id: str = Depends(get_current_user_id)):
     ADR v2 о ручном порядке фокуса)."""
     with get_conn(user_id) as cur:
         cur.execute(
-            """SELECT uq.id, cq.name, uq.current_level, uq.dev_status_code,
+            """SELECT uq.id, cq.name,
                       qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.last_expressed_at
                FROM user_qualities uq
                JOIN catalog_qualities cq ON cq.id = uq.catalog_quality_id

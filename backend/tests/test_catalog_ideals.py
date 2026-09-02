@@ -119,7 +119,6 @@ def test_manual_path_adopt_single_quality(auth_client):
 
     r = client.post("/v1/qualities", json={
         "catalog_quality_id": love["id"], "focus_code": "current_focus",
-        "dev_status_code": "forming", "current_level": 2,
     }, headers=h)
     assert r.status_code == 201
     assert r.json()["source"] == "manual"

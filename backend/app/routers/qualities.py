@@ -11,8 +11,7 @@ from app.schemas import UserQualityManualIn, UserQualityOut
 router = APIRouter(prefix="/qualities", tags=["qualities"])
 
 _SELECT = """
-    SELECT uq.id, uq.catalog_quality_id, cq.name, cq.definition, uq.focus_code, uq.dev_status_code,
-           uq.current_level, uq.source,
+    SELECT uq.id, uq.catalog_quality_id, cq.name, cq.definition, uq.focus_code, uq.source,
            qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.stability, qs.confidence,
            qs.last_expressed_at, qs.expression_count, qs.inversion_count, qs.inversion_count_30d
     FROM user_qualities uq
@@ -37,10 +36,10 @@ def adopt_quality_manually(body: UserQualityManualIn, user_id: str = Depends(get
         with get_conn(user_id) as cur:
             cur.execute(
                 """INSERT INTO user_qualities (id, user_id, catalog_quality_id, dev_priority_code,
-                                                 focus_code, dev_status_code, current_level, source)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,'manual')""",
+                                                 focus_code, source)
+                   VALUES (%s,%s,%s,%s,%s,'manual')""",
                 (new_id, user_id, body.catalog_quality_id, body.dev_priority_code,
-                 body.focus_code, body.dev_status_code, body.current_level),
+                 body.focus_code),
             )
     except psycopg2.Error as e:
         raise_from_db_error(e)
@@ -104,10 +103,9 @@ def update_my_quality(user_quality_id: str, body: UserQualityManualIn, user_id: 
     try:
         with get_conn(user_id) as cur:
             cur.execute(
-                """UPDATE user_qualities SET dev_priority_code=%s, focus_code=%s, dev_status_code=%s,
-                                              current_level=%s, updated_at=now()
+                """UPDATE user_qualities SET dev_priority_code=%s, focus_code=%s, updated_at=now()
                    WHERE id=%s""",
-                (body.dev_priority_code, body.focus_code, body.dev_status_code, body.current_level, user_quality_id),
+                (body.dev_priority_code, body.focus_code, user_quality_id),
             )
             if cur.rowcount == 0:
                 api_error(404, "QUALITY_NOT_FOUND", "Качество не найдено в вашем наборе")

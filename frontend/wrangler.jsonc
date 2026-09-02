@@ -3,7 +3,7 @@
   "name": "g-dev",
   // На момент реального деплоя поменяй на актуальную дату -- Cloudflare
   // требует "сегодняшнюю" compatibility_date, не абстрактную.
-  "compatibility_date": "2026-08-27",
+  "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "./dist",
     // Без этого прямые ссылки на /goals/123 (не через клиентскую навигацию)

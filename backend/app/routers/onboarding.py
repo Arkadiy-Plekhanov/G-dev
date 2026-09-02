@@ -31,8 +31,8 @@ def adopt_ideal(body: AdoptIdealIn, user_id: str = Depends(get_current_user_id))
             for cqid in quality_ids:
                 cur.execute(
                     """INSERT INTO user_qualities (user_id, catalog_quality_id, dev_priority_code,
-                                                     focus_code, dev_status_code, source, source_ideal_id)
-                       VALUES (%s,%s,'p3_normal','current_focus','undeveloped','ideal',%s)
+                                                     focus_code, source, source_ideal_id)
+                       VALUES (%s,%s,'p3_normal','current_focus','ideal',%s)
                        ON CONFLICT (user_id, catalog_quality_id) DO NOTHING
                        RETURNING id""",
                     (user_id, cqid, body.ideal_id),

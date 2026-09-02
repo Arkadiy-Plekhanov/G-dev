@@ -150,7 +150,14 @@ export default function QualityDetailPage() {
           </div>
 
           <div className="eyebrow" style={{ marginTop: 8, marginBottom: 16 }}>
-            {t('stats.growth_basis', { count: q.expression_count })}
+            {/* При малых данных честно говорим об объёме выборки, при
+                достаточных -- показываем устойчивость: насколько ровно
+                качество проявляется, а не только каким в среднем. Это
+                разные вопросы, и второй виден только когда есть на чём
+                его считать. */}
+            {q.confidence === 'no_data' || q.confidence === 'very_limited'
+              ? t('stats.growth_basis', { count: q.expression_count })
+              : `${t(`stats.stability.${q.stability}`)} · ${t('stats.growth_basis', { count: q.expression_count })}`}
             {q.inversion_count > 0 && (
               <>
                 {' · '}

@@ -63,8 +63,8 @@ def tenants():
         catalog_quality_id = rc.fetchone()["id"]
         qid = str(uuid.uuid4())
         rc.execute(
-            "INSERT INTO user_qualities (id,user_id,catalog_quality_id,dev_priority_code,focus_code,dev_status_code) "
-            "VALUES (%s,%s,%s,'p3_normal','not_in_focus','undeveloped')",
+            "INSERT INTO user_qualities (id,user_id,catalog_quality_id,dev_priority_code,focus_code) "
+            "VALUES (%s,%s,%s,'p3_normal','not_in_focus')",
             (qid, uid, catalog_quality_id),
         )
         aid = str(uuid.uuid4())

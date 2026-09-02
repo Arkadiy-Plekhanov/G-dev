@@ -9,23 +9,26 @@ frontend `https://g-dev.arkadiy-plekhanov.workers.dev` · backend
 
 ## Start here
 
+- **Taking over the codebase (developer or AI)?** Read `docs/HANDOFF.md` FIRST. It is the
+  one document written for that purpose: current state, decisions that must not be
+  reverted without reading why, traps already hit, and what was consciously left undone.
 - **Where the product is going?** Read `docs/MASTER_PLAN.md` (Russian) -- strategy, positioning,
   and the five-phase roadmap, grounded in four rounds of competitor/market/science research
   (`docs/research/`). The immediate phase is specced in
   `docs/specifications/07_PHASE_1_UI_COMPLETION.md`.
-- **New to this repo?** Read `docs/deployment/HUMAN_DEPLOYMENT_GUIDE.md` (Russian) for the
-  full staged path from local dev to production, with the reasoning behind each step --
-  Tiers 1-2 are done and the guide reflects exactly how, including the real failures hit
-  along the way and their actual causes.
-- **An AI agent picking up deployment work?** Read `docs/deployment/QWEN_DEPLOYMENT_SPEC.md`
-  -- it is self-contained and assumes no prior context.
+- **Deploying?** `docs/deployment/HUMAN_DEPLOYMENT_GUIDE.md` (Russian) -- the full staged
+  path from local dev to production with the reasoning behind each step. Tiers 1-2 are
+  done and the guide reflects exactly how, including the real failures hit along the way
+  and their actual causes.
 - **Local development:** `cp .env.example .env`, then `make dev-up` (Docker/Podman
-  required). `make dev-test` runs both test suites (55 backend + 12 frontend).
+  required). `make dev-test` runs both test suites (66 backend + 23 frontend).
 - **Resetting/reseeding the Neon staging database:** `scripts/reset-neon.sh` -- one
-  command, verifies its own result (25 catalog qualities, 3 ideals), fails loudly instead
+  command, verifies its own result (169 catalog qualities, 3 ideals), fails loudly instead
   of silently if anything doesn't match.
-- **Architecture:** `docs/specifications/` (canonical spec, security architecture, auth
-  architecture) and `docs/adr/` (ADR-001: removal of `is_relevant`).
+- **Architecture:** `docs/specifications/` (canonical spec, the nine owner decisions in
+  `05_ADR_v2_INTEGRATION.md`, security and auth architecture) and `docs/adr/`.
+- **`docs/archive/`:** superseded documents, kept for the reasoning they contain. Each
+  carries a banner naming what replaced it -- they are context, not instructions.
 - **Prior research:** `docs/research/` (Alibaba Cloud deployment blueprint, staged
   zero-cost validation plan, Neon/Render/Cloudflare deep-dive, Hard Road feature map --
   a screen-by-screen teardown of the closest competitor, built from primary screenshots
@@ -38,7 +41,9 @@ FastAPI + psycopg2 (with pre-ping/retry resilience for Neon's autosuspend -- see
 views -- see `docs/specifications/03_SECURITY_ARCHITECTURE_v1.0.md`) -- Google-only auth,
 CORS with `allow_credentials=False` (Bearer-token auth, no cookies) -- Vite + React 19 PWA,
 deployed to Cloudflare's Workers + Static Assets model (not classic Pages -- see
-`frontend/wrangler.jsonc`) -- 9 ordered SQL/Python migrations in `database/`.
+`frontend/wrangler.jsonc`) -- 15 ordered SQL/Python migrations in `database/`, applied by
+`scripts/apply-migrations.sh` (the single source of truth for the list and order, shared by the
+Makefile, CI and `scripts/reset-neon.sh`).
 
 ## Status
 
