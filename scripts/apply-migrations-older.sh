@@ -41,7 +41,7 @@ if [ -z "${PSQL_CMD:-}" ]; then
     echo "Ошибка: нужен либо DSN (для дефолтного psql), либо явный PSQL_CMD." >&2
     exit 1
   fi
-  PSQL_CMD="psql $(printf '%q' "$DSN") -v ON_ERROR_STOP=1 -f"
+  PSQL_CMD="psql $DSN -v ON_ERROR_STOP=1 -f"
 fi
 PY_CMD="${PY_CMD:-python3}"
 # database/ здесь -- префикс путей ВНЕ контейнера (для дефолтного случая);
@@ -113,15 +113,15 @@ for m in "${MIGRATIONS[@]}"; do
       # Дефолтный путь (CI/Neon/WSL host) -- сид-скрипты без SEED_DSN
       # подключаются через peer-аутентификацию (дефолт для локальной
       # разработки в песочнице), что не совпадает с $DSN.
-      run_step "SEED_DSN=$(printf '%q' "$DSN") $PY_CMD $(printf '%q' "$DB_PREFIX/$m")"
+      run_step "SEED_DSN=$DSN $PY_CMD $DB_PREFIX/$m"
     else
       # Makefile передаёт свой PY_CMD (docker compose run backend python3),
       # тот контейнер уже получает SEED_DSN через docker-compose.yml.
-      run_step "$PY_CMD $(printf '%q' "$DB_PREFIX/$m")"
+      run_step "$PY_CMD $DB_PREFIX/$m"
     fi
   else
     echo "==> $m..."
-    run_step "$PSQL_CMD $(printf '%q' "$DB_PREFIX/$m")"
+    run_step "$PSQL_CMD $DB_PREFIX/$m"
   fi
 done
 
