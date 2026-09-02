@@ -389,3 +389,37 @@ def test_reflection_with_qualities_rolls_back_atomically_on_bad_quality(scenario
 
     mine = client.get("/v1/reflections", headers=h).json()
     assert not any(x["insight"] == "Should not be saved" for x in mine)
+
+
+# ---------- PATCH качества: частичный, без побочной перезаписи ----------
+
+def test_patch_quality_accepts_a_single_field_and_leaves_the_rest_alone(scenario):
+    """Найдено ручным тестированием: кнопка «убрать из фокуса» падала с
+    «Something went wrong». Причина двойная -- catalog_quality_id был
+    ОБЯЗАТЕЛЕН в схеме PATCH (422 на запрос, который его не шлёт), а сам
+    UPDATE писал все колонки подряд, поэтому смена одного поля молча
+    сбрасывала остальные в значения по умолчанию. Тихая порча данных
+    опаснее видимой ошибки, поэтому тест проверяет ОБА следствия."""
+    client, h, ctx = scenario
+    qid = ctx["quality"]["id"]
+
+    # Приоритет заведомо не дефолтный -- чтобы заметить, если его затрут.
+    r = client.patch(f"/v1/qualities/{qid}", json={"dev_priority_code": "p1_critical"}, headers=h)
+    assert r.status_code == 200
+    assert r.json()["dev_priority_code"] == "p1_critical"
+    assert r.json()["focus_code"] == "current_focus"  # не тронут
+
+    # Меняем ТОЛЬКО фокус, без catalog_quality_id -- ровно то, что шлёт кнопка.
+    r = client.patch(f"/v1/qualities/{qid}", json={"focus_code": "not_in_focus"}, headers=h)
+    assert r.status_code == 200
+    assert r.json()["focus_code"] == "not_in_focus"
+    assert r.json()["dev_priority_code"] == "p1_critical"  # НЕ сброшен в p3_normal
+
+
+def test_patch_quality_with_empty_body_is_rejected(scenario):
+    """Пустой PATCH -- не «успешно ничего не поменяли», а ошибка: почти
+    всегда это признак того, что клиент собрал запрос неправильно."""
+    client, h, ctx = scenario
+    r = client.patch(f"/v1/qualities/{ctx['quality']['id']}", json={}, headers=h)
+    assert r.status_code == 400
+    assert r.json()["detail"]["code"] == "NOTHING_TO_UPDATE"

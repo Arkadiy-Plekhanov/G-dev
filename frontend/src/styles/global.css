@@ -185,20 +185,25 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
    justify-content: space-between. */
 .stat-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
 }
+/* Побеждает .stat-row, а не .card-link (тот задаёт display: block).
+   Специфичность, а не порядок в файле: иначе поведение зависело бы от
+   того, кто где написан, и молча ломалось бы при перестановке правил. */
+.card-link.stat-row { display: flex; }
+
 .stat-row-name {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 8rem;      /* название не сжимается в колонку шириной в букву */
 }
 .stat-row-details {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: flex-end;
-  flex-shrink: 0;
   gap: var(--space-2);
   text-align: right;
 }

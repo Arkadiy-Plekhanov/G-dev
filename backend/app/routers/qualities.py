@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends
 from app.db import get_conn
 from app.deps import get_current_user_id
 from app.errors import api_error, raise_from_db_error
-from app.schemas import UserQualityManualIn, UserQualityOut
+from app.schemas import UserQualityManualIn, UserQualityPatchIn, UserQualityOut
 
 router = APIRouter(prefix="/qualities", tags=["qualities"])
 
 _SELECT = """
-    SELECT uq.id, uq.catalog_quality_id, cq.name, cq.definition, uq.focus_code, uq.source,
+    SELECT uq.id, uq.catalog_quality_id, cq.name, cq.definition, uq.focus_code, uq.dev_priority_code, uq.source,
            qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.stability, qs.confidence,
            qs.last_expressed_at, qs.expression_count, qs.inversion_count, qs.inversion_count_30d
     FROM user_qualities uq
@@ -97,15 +97,22 @@ def get_quality_overview(user_quality_id: str, user_id: str = Depends(get_curren
 
 
 @router.patch("/{user_quality_id}", response_model=UserQualityOut)
-def update_my_quality(user_quality_id: str, body: UserQualityManualIn, user_id: str = Depends(get_current_user_id)):
+def update_my_quality(user_quality_id: str, body: UserQualityPatchIn, user_id: str = Depends(get_current_user_id)):
     # catalog_quality_id внутри PATCH не меняем -- смена привязки к другому
     # каталожному качеству это, по сути, удаление+добавление, не редактирование.
+    provided = body.model_dump(exclude_unset=True)
+    if not provided:
+        api_error(400, "NOTHING_TO_UPDATE", "Не передано ни одного поля для изменения")
+    cols, vals = list(provided.keys()), list(provided.values())
     try:
         with get_conn(user_id) as cur:
             cur.execute(
-                """UPDATE user_qualities SET dev_priority_code=%s, focus_code=%s, updated_at=now()
-                   WHERE id=%s""",
-                (body.dev_priority_code, body.focus_code, user_quality_id),
+                # SET собирается из ПРИСЛАННЫХ полей, а не из всех подряд:
+                # иначе частичный запрос («смени только фокус») перезаписал
+                # бы остальные значениями по умолчанию схемы.
+                f"""UPDATE user_qualities SET {', '.join(f'{c}=%s' for c in cols)}, updated_at=now()
+                    WHERE id=%s""",
+                (*vals, user_quality_id),
             )
             if cur.rowcount == 0:
                 api_error(404, "QUALITY_NOT_FOUND", "Качество не найдено в вашем наборе")

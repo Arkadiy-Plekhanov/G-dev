@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useParams, Link } from 'react-router-dom'
 import { goalsApi, reflectionsApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
-import { growthStage } from '../lib/growthStage'
 import { BASELINE } from '../lib/displayMaps'
 
 
@@ -89,7 +88,14 @@ export default function GoalDetailPage() {
                     даже когда общих данных давно достаточно. Теперь это два
                     разных, оба осмысленных числа: устойчивая стадия качества
                     в целом, и отдельно -- как оно ведёт себя именно здесь. */}
-                <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
+                {/* Общая стадия качества здесь НЕ показывается: она про
+                    качество вообще и живёт на его собственной карточке, а
+                    этот экран отвечает на другой вопрос -- как качество
+                    ведёт себя ИМЕННО ЗДЕСЬ. Три величины в строке
+                    (стадия + значение в цели + сравнение) были и
+                    избыточны по смыслу, и физически не помещались на
+                    телефоне: правая часть выдавливала название в колонку
+                    шириной в букву. */}
                 <span className="eyebrow">{t('goals.inThisGoal', { avg: Number(q.avg_in_goal).toFixed(1) })}</span>
                 {q.vs_baseline && (
                   <span className={`pill${q.vs_baseline === 'below_usual' ? ' pill--brick' : q.vs_baseline === 'above_usual' ? ' pill--gold' : ''}`}>
@@ -115,7 +121,14 @@ export default function GoalDetailPage() {
             <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link stat-row">
               <div className="stat-row-name">{q.name.en}</div>
               <div className="stat-row-details">
-                <span>{t(`stats.stage.${growthStage(q) ?? 'none'}`)}</span>
+                {/* Общая стадия качества здесь НЕ показывается: она про
+                    качество вообще и живёт на его собственной карточке, а
+                    этот экран отвечает на другой вопрос -- как качество
+                    ведёт себя ИМЕННО ЗДЕСЬ. Три величины в строке
+                    (стадия + значение в цели + сравнение) были и
+                    избыточны по смыслу, и физически не помещались на
+                    телефоне: правая часть выдавливала название в колонку
+                    шириной в букву. */}
                 <span className="eyebrow">{t('goals.inThisGoal', { avg: Number(q.avg_in_goal).toFixed(1) })}</span>
                 {q.vs_baseline && (
                   <span className={`pill${q.vs_baseline === 'below_usual' ? ' pill--brick' : q.vs_baseline === 'above_usual' ? ' pill--gold' : ''}`}>

@@ -94,6 +94,21 @@ class UserQualityManualIn(BaseModel):
     focus_code: str = "not_in_focus"
 
 
+class UserQualityPatchIn(BaseModel):
+    """PATCH -- по-настоящему частичный: присылают только то, что меняют.
+
+    Отдельная схема от UserQualityManualIn (та -- для создания) по двум
+    причинам, обе из реального бага: в ней catalog_quality_id ОБЯЗАТЕЛЕН,
+    хотя PATCH его сознательно не меняет -- то есть клиент был обязан
+    прислать поле, которое всё равно игнорируется (запрос «убрать из
+    фокуса» падал с 422). И все поля имели значения по умолчанию, из-за
+    чего частичный запрос молча перезаписывал неприсланное дефолтом:
+    сменил фокус -- потерял приоритет. None здесь означает «не трогать».
+    """
+    dev_priority_code: Optional[str] = None
+    focus_code: Optional[str] = None
+
+
 class AdoptIdealIn(BaseModel):
     ideal_id: str
 
@@ -107,6 +122,11 @@ class UserQualityOut(BaseModel):
                           # иначе для «своих» качеств она выглядела бы иначе,
                           # чем для остальных, а это одна и та же карточка
     focus_code: str
+    dev_priority_code: str  # записывался и через POST, и через PATCH, но наружу
+                            # не отдавался: клиент не мог прочитать то, что сам
+                            # же установил. Состояние, доступное на запись и
+                            # недоступное на чтение -- тот же изъян, из-за
+                            # которого убрали current_level/dev_status_code.
     source: str
     avg_score_all_time: Optional[float] = None
     avg_score_30d: Optional[float] = None
