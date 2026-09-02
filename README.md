@@ -12,6 +12,9 @@ frontend `https://g-dev.arkadiy-plekhanov.workers.dev` · backend
 - **Taking over the codebase (developer or AI)?** Read `docs/HANDOFF.md` FIRST. It is the
   one document written for that purpose: current state, decisions that must not be
   reverted without reading why, traps already hit, and what was consciously left undone.
+- **Something behaves oddly on one device only?** `docs/ENVIRONMENTS.md` -- what each
+  environment demanded, where it is addressed, and (equally important) what looks
+  environment-specific but is a plain bug that happens to show up there first.
 - **Building a client against the API?** Read `docs/API_CONTRACT.md` -- the conventions
   OpenAPI cannot express: scope semantics, error-code contract, token rotation, stability
   tiers, what would force a `/v2`. Field-level truth lives in `/docs`, generated from code.

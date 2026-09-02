@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext'
 import { qualitiesApi } from './api/resources'
 import { CenterLoading } from './components/Feedback'
 import BottomNav from './components/BottomNav'
+import ScrollToTop from './components/ScrollToTop'
 import { OnboardingStatusContext } from './onboarding/OnboardingContext'
 
 import LoginPage from './pages/LoginPage'
@@ -121,6 +122,9 @@ function AuthedApp() {
 export default function App() {
   return (
     <BrowserRouter>
+      {/* Внутри роутера (нужен useLocation) и ВЫШЕ AuthGate: сбрасывать
+          прокрутку надо на любом переходе, включая вход и онбординг. */}
+      <ScrollToTop />
       <AuthProvider>
         <AuthGate>
           <AuthedApp />
