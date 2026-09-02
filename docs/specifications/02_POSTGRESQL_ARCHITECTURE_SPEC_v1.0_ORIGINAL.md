@@ -1,3 +1,13 @@
+> ## ⚠️ ИСТОРИЧЕСКИЙ ДОКУМЕНТ — НЕ ИСТОЧНИК ПРАВДЫ
+>
+> Сохранён ради контекста решений: объясняет, ПОЧЕМУ проект пришёл к
+> нынешнему устройству. Числа, имена файлов и инструкции в нём могли
+> устареть и НЕ должны использоваться как руководство к действию.
+>
+> **Актуально вместо него:** живая схема в `database/` (16 миграций) и `docs/specifications/05_ADR_v2_INTEGRATION.md`
+
+---
+
 # PostgreSQL Architecture & Migration Specification v1.0
 
 **Основа:** `CLAUDE_EXCEL_CANONICAL_SPEC_v1.0.md` (behavioral truth) + design intent (`AppSheet_Production_Spec...docx`) + разбор предложений ЧатДжипити.

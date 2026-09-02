@@ -253,6 +253,20 @@ class CycleIn(BaseModel):
         return v
 
 
+class CycleGoalRef(BaseModel):
+    """Цель, привязанная к сезону -- только то, что нужно для списка."""
+    id: str
+    name: str
+
+
+class CycleQualityRef(BaseModel):
+    """Качество, привязанное к сезону. id -- ПРИНЯТОГО качества
+    (user_qualities), не каталожного: ссылка ведёт на карточку со
+    статистикой."""
+    id: str
+    name: dict
+
+
 class CycleOut(BaseModel):
     id: str
     name: str
@@ -261,6 +275,13 @@ class CycleOut(BaseModel):
     status_code: str
     description: Optional[str]
     summary: Optional[str]
+    # Привязанные цели и качества. Поля были в ответе, но НЕ объявлены в
+    # схеме -- и после подключения response_model FastAPI начал их молча
+    # отфильтровывать: экран сезона остался бы без списков, без единой
+    # ошибки в логах. Поймано тестами при подключении схемы -- ровно тот
+    # случай, ради которого схемы и нужны.
+    goals: list[CycleGoalRef] = []
+    qualities: list[CycleQualityRef] = []
 
 
 # ---------- reflections ----------
@@ -301,3 +322,129 @@ class ReflectionOut(BaseModel):
     what_stuck: Optional[str]
     next_cycle_change: Optional[str]
     action_id: Optional[str] = None
+
+
+# ---------- сводные ответы (read-model для экранов) ----------
+# Эти схемы описывают ответы, которые собираются из нескольких запросов и
+# не соответствуют ни одной таблице напрямую. Именно они дольше всего
+# оставались без response_model -- и именно они ломались чаще всего:
+# пропавшая колонка проявлялась не ошибкой бэкенда, а «Failed to fetch» в
+# браузере, далеко от причины.
+#
+# ВАЖНО про recent_scores: ряд оценок для спарклайна, порядок «новые
+# первыми» (клиент разворачивает). ОХВАТ ЗАВИСИТ ОТ ЭНДПОИНТА и по самим
+# данным неразличим -- два одинаковых массива чисел означают разное:
+#   * GoalQualityStat.recent_scores  -- только проявления ВНУТРИ этой цели
+#   * FocusQualityOut.recent_scores  -- ГЛОБАЛЬНО, вся история качества
+# Клиент, перепутавший их, нарисует правдоподобный, но неверный график.
+
+
+class ActionSummaryOut(BaseModel):
+    """Действие в списке на карточке цели -- без описания и заметок."""
+    id: str
+    name: str
+    occurred_at: date
+    context_id: Optional[int] = None
+    avg_score: Optional[float] = None
+    quality_count: Optional[int] = None
+
+
+class GoalQualityStat(BaseModel):
+    """Качество в разрезе ОДНОЙ цели: как оно проявляется здесь против
+    своего обычного уровня."""
+    catalog_quality_id: str
+    quality_id: str
+    name: dict
+    count_in_goal: int
+    avg_in_goal: float
+    recent_scores: Optional[list[int]] = None   # охват: только эта цель
+    avg_score_all_time: Optional[float] = None
+    vs_baseline: Optional[str] = None           # above_usual | below_usual | as_usual
+
+
+class GoalSubtreeOut(BaseModel):
+    """Сводка по цели И всем её подцелям вместе. None, если подцелей нет --
+    иначе это была бы точная копия чисел самой цели."""
+    action_count: int
+    descendant_goal_count: int
+    qualities: list[GoalQualityStat] = []
+
+
+class GoalChildOut(BaseModel):
+    """Прямая подцель, кратко. Не рекурсивно: у своей карточки подцель
+    получит такую же секцию, дублировать её здесь незачем."""
+    id: str
+    name: str
+    status_code: str
+    action_count: int
+    child_goal_count: int
+
+
+class GoalOverviewOut(BaseModel):
+    goal: GoalOut
+    recent_actions: list[ActionSummaryOut] = []
+    qualities: list[GoalQualityStat] = []
+    subtree: Optional[GoalSubtreeOut] = None
+    children: list[GoalChildOut] = []
+
+
+class QualityExpressionOut(BaseModel):
+    """Проявление качества в конкретном действии."""
+    action_id: str
+    action_name: str
+    occurred_at: date
+    score: int
+    comment: Optional[str] = None
+
+
+class QualityContextStat(BaseModel):
+    """Разбивка качества по контекстам действия («где чаще проявляется»)."""
+    context_id: Optional[int] = None
+    context_label: Optional[str] = None
+    count: int
+    avg_score: float
+
+
+class QualityOverviewOut(BaseModel):
+    quality: UserQualityOut
+    recent_expressions: list[QualityExpressionOut] = []
+    by_context: list[QualityContextStat] = []
+
+
+class FocusQualityOut(BaseModel):
+    """Строка списка «в фокусе» на главном экране."""
+    id: str
+    name: dict
+    avg_score_all_time: Optional[float] = None
+    avg_score_30d: Optional[float] = None
+    trend: Optional[str] = None
+    last_expressed_at: Optional[date] = None
+    recent_scores: Optional[list[int]] = None   # охват: ГЛОБАЛЬНЫЙ
+
+
+class DataQualityAlertOut(BaseModel):
+    """Сигнал гигиены данных -- инструмент владельца, не пользовательский
+    экран (см. §5 спецификации Фазы 1)."""
+    check_name: str
+    record_id: str
+    label: Optional[str] = None
+
+
+class ScoreLegendOut(BaseModel):
+    """Ступени шкалы роста из БД -- клиенты берут названия отсюда, а не
+    хардкодят. is_growth_stage=false у 0: он ВНЕ шкалы роста."""
+    score: int
+    slug: str
+    name: dict
+    description: dict
+    is_growth_stage: bool
+
+
+class AdoptIdealOut(BaseModel):
+    adopted_quality_ids: list[str] = []
+    already_had: int
+
+
+class HealthOut(BaseModel):
+    """Проверка живости -- используется Render для health check."""
+    status: str

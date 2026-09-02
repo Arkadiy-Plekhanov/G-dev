@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends
 
 from app.db import get_conn
+from app.schemas import CatalogQualityOut, IdealOut
 from app.deps import get_current_user_id
 from app.errors import api_error
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
 
 
-@router.get("/qualities")
+@router.get("/qualities", response_model=list[CatalogQualityOut])
 def list_catalog_qualities(_user_id: str = Depends(get_current_user_id)):
     # Глобальный справочник, без RLS -- current_user_id здесь нужен только
     # чтобы эндпоинт оставался за авторизацией, не как фильтр видимости.
@@ -19,7 +20,7 @@ def list_catalog_qualities(_user_id: str = Depends(get_current_user_id)):
         return cur.fetchall()
 
 
-@router.get("/ideals")
+@router.get("/ideals", response_model=list[IdealOut])
 def list_ideals(_user_id: str = Depends(get_current_user_id)):
     with get_conn() as cur:
         cur.execute(
@@ -42,7 +43,7 @@ def list_ideals(_user_id: str = Depends(get_current_user_id)):
         return ideals
 
 
-@router.get("/ideals/{ideal_id}")
+@router.get("/ideals/{ideal_id}", response_model=IdealOut)
 def get_ideal(ideal_id: str, _user_id: str = Depends(get_current_user_id)):
     with get_conn() as cur:
         cur.execute("SELECT id, slug, name, bio, category FROM ideals WHERE id = %s", (ideal_id,))

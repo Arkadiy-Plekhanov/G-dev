@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from app.db import get_conn
 from app.deps import get_current_user_id
 from app.errors import api_error, raise_from_db_error
-from app.schemas import UserQualityManualIn, UserQualityPatchIn, UserQualityOut
+from app.schemas import QualityOverviewOut, UserQualityManualIn, UserQualityOut, UserQualityPatchIn
 
 router = APIRouter(prefix="/qualities", tags=["qualities"])
 
@@ -71,7 +71,7 @@ def get_my_quality(user_quality_id: str, user_id: str = Depends(get_current_user
     return row
 
 
-@router.get("/{user_quality_id}/overview")
+@router.get("/{user_quality_id}/overview", response_model=QualityOverviewOut)
 def get_quality_overview(user_quality_id: str, user_id: str = Depends(get_current_user_id)):
     """Карточка качества -- read-model из forensic-аудита исходного Excel
     (лист «Аналитика», блок «Карточка качества»): само качество + вся

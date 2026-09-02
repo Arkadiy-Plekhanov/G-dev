@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.db import get_conn
+from app.schemas import ContextOut, GroupOut, OptionOut, ScoreLegendOut
 from app.deps import get_current_user_id
 
 router = APIRouter(prefix="/reference", tags=["reference"])
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/reference", tags=["reference"])
 # quality_groups не было -- этот роутер его закрывает.
 
 
-@router.get("/options/{list_type}")
+@router.get("/options/{list_type}", response_model=list[OptionOut])
 def get_options(list_type: str, _user_id: str = Depends(get_current_user_id)):
     """Один из семи открытых, дополняемых списков (goal_status, priority,
     action_status, quality_dev_status, quality_focus, reflection_type,
@@ -24,21 +25,21 @@ def get_options(list_type: str, _user_id: str = Depends(get_current_user_id)):
         return cur.fetchall()
 
 
-@router.get("/action-contexts")
+@router.get("/action-contexts", response_model=list[ContextOut])
 def get_action_contexts(_user_id: str = Depends(get_current_user_id)):
     with get_conn() as cur:
         cur.execute("SELECT id, code, label FROM action_contexts WHERE is_active ORDER BY sort_order")
         return cur.fetchall()
 
 
-@router.get("/quality-groups")
+@router.get("/quality-groups", response_model=list[GroupOut])
 def get_quality_groups(_user_id: str = Depends(get_current_user_id)):
     with get_conn() as cur:
         cur.execute("SELECT id, code, label FROM quality_groups WHERE is_active ORDER BY sort_order")
         return cur.fetchall()
 
 
-@router.get("/score-legend")
+@router.get("/score-legend", response_model=list[ScoreLegendOut])
 def get_score_legend(_user_id: str = Depends(get_current_user_id)):
     """Шкала оценки проявления качества. Отдаётся из БД, а не хардкодится
     во фронтенде: названия ступеней -- доменный словарь продукта, они

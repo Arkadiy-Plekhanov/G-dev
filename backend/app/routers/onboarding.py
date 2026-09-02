@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends
 from app.db import get_conn
 from app.deps import get_current_user_id
 from app.errors import api_error, raise_from_db_error
-from app.schemas import AdoptIdealIn
+from app.schemas import AdoptIdealIn, AdoptIdealOut
 
 router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 
 
-@router.post("/adopt-ideal", status_code=201)
+@router.post("/adopt-ideal", status_code=201, response_model=AdoptIdealOut)
 def adopt_ideal(body: AdoptIdealIn, user_id: str = Depends(get_current_user_id)):
     """Путь (а) из трёх равноценных путей построения фокуса: пользователь
     выбирает Идеал -- система принимает ВСЕ качества его композиции как

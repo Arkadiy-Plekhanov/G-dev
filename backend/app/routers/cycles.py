@@ -31,14 +31,14 @@ def _attached(cur, cycle_id: str):
     return goals, qualities
 
 
-@router.get("")
+@router.get("", response_model=list[CycleOut])
 def list_cycles(user_id: str = Depends(get_current_user_id)):
     with get_conn(user_id) as cur:
         cur.execute(_SELECT + " ORDER BY start_date DESC NULLS LAST")
         return cur.fetchall()
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, response_model=CycleOut)
 def create_cycle(body: CycleIn, user_id: str = Depends(get_current_user_id)):
     """Атомарно: цикл + все привязанные цели/качества одной транзакцией --
     тот же принцип, что и в /actions/with-qualities."""
@@ -67,7 +67,7 @@ def create_cycle(body: CycleIn, user_id: str = Depends(get_current_user_id)):
     return {**cycle, "goals": goals, "qualities": qualities}
 
 
-@router.get("/{cycle_id}")
+@router.get("/{cycle_id}", response_model=CycleOut)
 def get_cycle(cycle_id: str, user_id: str = Depends(get_current_user_id)):
     with get_conn(user_id) as cur:
         cur.execute(_SELECT + " WHERE id = %s", (cycle_id,))

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import actions, analytics, auth, catalog, cycles, goals, onboarding, qualities, reference, reflections
+from app.schemas import HealthOut
 
 app = FastAPI(title="Личная система развития — API", version="0.1.0")
 
@@ -31,6 +32,6 @@ app.include_router(analytics.router, prefix="/v1")
 app.include_router(reference.router, prefix="/v1")
 
 
-@app.get("/health")
+@app.get("/health", response_model=HealthOut)
 def health():
     return {"status": "ok"}

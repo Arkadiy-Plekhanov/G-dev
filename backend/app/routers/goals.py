@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from app.db import get_conn
 from app.deps import get_current_user_id
 from app.errors import api_error, raise_from_db_error
-from app.schemas import GoalIn, GoalOut
+from app.schemas import GoalIn, GoalOut, GoalOverviewOut
 
 router = APIRouter(prefix="/goals", tags=["goals"])
 
@@ -56,7 +56,7 @@ def get_goal(goal_id: str, user_id: str = Depends(get_current_user_id)):
     return row
 
 
-@router.get("/{goal_id}/overview")
+@router.get("/{goal_id}/overview", response_model=GoalOverviewOut)
 def get_goal_overview(goal_id: str, user_id: str = Depends(get_current_user_id)):
     """Карточка цели -- read-model, спроектированный ещё в forensic-аудите
     исходного Excel (лист «Аналитика», блок «Карточка цели»): сама цель +

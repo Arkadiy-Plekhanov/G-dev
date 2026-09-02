@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
 
 from app.db import get_conn
+from app.schemas import DataQualityAlertOut, FocusQualityOut
 from app.deps import get_current_user_id
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
-@router.get("/current-focus")
+@router.get("/current-focus", response_model=list[FocusQualityOut])
 def current_focus(user_id: str = Depends(get_current_user_id)):
     """Топ фокуса -- read-model из forensic-аудита исходного Excel (лист
     «Аналитика», блок «Текущий фокус»): все качества со статусом
@@ -42,7 +43,7 @@ def current_focus(user_id: str = Depends(get_current_user_id)):
         return cur.fetchall()
 
 
-@router.get("/data-quality-alerts")
+@router.get("/data-quality-alerts", response_model=list[DataQualityAlertOut])
 def data_quality_alerts(user_id: str = Depends(get_current_user_id)):
     """Advisory-проверки (не блокирующие, только напоминания) -- то, что
     осталось «мягким» после Security Gate: жёсткие инварианты уже стали

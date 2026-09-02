@@ -12,6 +12,9 @@ frontend `https://g-dev.arkadiy-plekhanov.workers.dev` · backend
 - **Taking over the codebase (developer or AI)?** Read `docs/HANDOFF.md` FIRST. It is the
   one document written for that purpose: current state, decisions that must not be
   reverted without reading why, traps already hit, and what was consciously left undone.
+- **Building a client against the API?** Read `docs/API_CONTRACT.md` -- the conventions
+  OpenAPI cannot express: scope semantics, error-code contract, token rotation, stability
+  tiers, what would force a `/v2`. Field-level truth lives in `/docs`, generated from code.
 - **Where the product is going?** Read `docs/MASTER_PLAN.md` (Russian) -- strategy, positioning,
   and the five-phase roadmap, grounded in four rounds of competitor/market/science research
   (`docs/research/`). The immediate phase is specced in
@@ -27,8 +30,10 @@ frontend `https://g-dev.arkadiy-plekhanov.workers.dev` · backend
   of silently if anything doesn't match.
 - **Architecture:** `docs/specifications/` (canonical spec, the nine owner decisions in
   `05_ADR_v2_INTEGRATION.md`, security and auth architecture) and `docs/adr/`.
-- **`docs/archive/`:** superseded documents, kept for the reasoning they contain. Each
-  carries a banner naming what replaced it -- they are context, not instructions.
+- **Historical documents** stay where they are but carry a banner at the top naming what
+  replaced them (`02_..._ORIGINAL`, `06_..._HISTORICAL`, `Neon_Seed_Specification`,
+  `QWEN_DEPLOYMENT_SPEC`). They are context for why things ended up this way, not
+  instructions to follow.
 - **Prior research:** `docs/research/` (Alibaba Cloud deployment blueprint, staged
   zero-cost validation plan, Neon/Render/Cloudflare deep-dive, Hard Road feature map --
   a screen-by-screen teardown of the closest competitor, built from primary screenshots
