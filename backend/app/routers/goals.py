@@ -88,13 +88,22 @@ def get_goal_overview(goal_id: str, user_id: str = Depends(get_current_user_id))
 
         cur.execute(
             """WITH per_goal AS (
-                   SELECT qe.quality_id, count(*) AS count_in_goal, avg(qe.score) AS avg_in_goal
+                   -- recent_scores: ряд для спарклайна, ТЕМАТИЧЕСКИЙ -- только
+                   -- проявления внутри этой цели. Считается тем же проходом и
+                   -- той же группировкой, что и среднее рядом: отдельного
+                   -- запроса (и отдельной сущности) для графика не заводим.
+                   -- DESC + срез [1:20] -- берём последние двадцать; фронт
+                   -- разворачивает их, чтобы линия читалась слева направо,
+                   -- как течение времени (так же поступает карточка качества).
+                   SELECT qe.quality_id, count(*) AS count_in_goal, avg(qe.score) AS avg_in_goal,
+                          (array_agg(qe.score ORDER BY a.occurred_at DESC, a.created_at DESC))[1:20] AS recent_scores
                    FROM quality_expressions qe
                    JOIN actions a ON a.id = qe.action_id
                    WHERE a.goal_id = %s
                    GROUP BY qe.quality_id
                )
                SELECT cq.id AS catalog_quality_id, uq.id AS quality_id, cq.name, pg.count_in_goal, pg.avg_in_goal,
+                      pg.recent_scores,
                       qs.avg_score_all_time,
                       CASE WHEN qs.avg_score_all_time IS NULL THEN NULL
                            WHEN pg.avg_in_goal > qs.avg_score_all_time + 0.3 THEN 'above_usual'
@@ -117,7 +126,8 @@ def get_goal_overview(goal_id: str, user_id: str = Depends(get_current_user_id))
                        SELECT id FROM goal_hierarchy WHERE %(goal_id)s = ANY(path_ids)
                    ),
                    per_subtree AS (
-                       SELECT qe.quality_id, count(*) AS count_in_goal, avg(qe.score) AS avg_in_goal
+                       SELECT qe.quality_id, count(*) AS count_in_goal, avg(qe.score) AS avg_in_goal,
+                              (array_agg(qe.score ORDER BY a.occurred_at DESC, a.created_at DESC))[1:20] AS recent_scores
                        FROM quality_expressions qe
                        JOIN actions a ON a.id = qe.action_id
                        WHERE a.goal_id IN (SELECT id FROM subtree_ids)
@@ -130,7 +140,7 @@ def get_goal_overview(goal_id: str, user_id: str = Depends(get_current_user_id))
                            SELECT COALESCE(jsonb_agg(row_to_json(x) ORDER BY x.count_in_goal DESC), '[]'::jsonb)
                            FROM (
                                SELECT cq.id AS catalog_quality_id, uq.id AS quality_id, cq.name,
-                                      ps.count_in_goal, ps.avg_in_goal, qs.avg_score_all_time,
+                                      ps.count_in_goal, ps.avg_in_goal, ps.recent_scores, qs.avg_score_all_time,
                                       CASE WHEN qs.avg_score_all_time IS NULL THEN NULL
                                            WHEN ps.avg_in_goal > qs.avg_score_all_time + 0.3 THEN 'above_usual'
                                            WHEN ps.avg_in_goal < qs.avg_score_all_time - 0.3 THEN 'below_usual'

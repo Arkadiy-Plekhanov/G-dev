@@ -65,14 +65,13 @@
     "priority": "Priority",
     "empty": "No goals yet. Start with one you care about.",
     "recentActions": "Recent actions",
-    "qualitiesHere": "Qualities that showed up here",
     "aboveUsual": "above usual",
     "belowUsual": "below usual",
     "asUsual": "as usual",
-    "inThisGoal": "in this goal: {{avg}}",
     "combinedWithSubgoals": "Combined with {{count}} subgoals",
     "subgoals": "Subgoals",
-    "ownActions": "{{count}} own"
+    "ownActions": "{{count}} own",
+    "qualityExpressionHere": "Quality expression in this goal"
   },
   "qualities": {
     "title": "My qualities",

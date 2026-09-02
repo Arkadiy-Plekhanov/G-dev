@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Тесты | 68 backend (pytest) + 23 frontend (vitest) — все против ЖИВОГО бэкенда, не моков |
+| Тесты | 69 backend (pytest) + 23 frontend (vitest) — все против ЖИВОГО бэкенда, не моков |
 | Миграции | 15 файлов в `database/`, применяются `scripts/apply-migrations.sh` |
 | Каталог | 169 качеств, 9 групп, 3 идеала |
 | Стек | FastAPI + PostgreSQL + React 19 (Vite) |
@@ -33,7 +33,7 @@
 
 ```bash
 make dev-up      # поднять всё локально (Postgres → миграции → backend+frontend)
-make dev-test    # 68 + 23, должно быть зелёно
+make dev-test    # 69 + 23, должно быть зелёно
 make dev-reset   # полный сброс, когда состояние непонятно
 ```
 

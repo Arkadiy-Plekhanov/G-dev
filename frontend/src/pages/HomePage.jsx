@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { analyticsApi, actionsApi } from '../api/resources'
 import { growthStage } from '../lib/growthStage'
 import { TREND_ARROW, TREND_CLASS } from '../lib/displayMaps'
+import Sparkline from '../components/Sparkline'
+import { sparklinePoints } from '../lib/sparkline'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { useAuth } from '../auth/AuthContext'
 
@@ -69,6 +71,10 @@ export default function HomePage() {
               <span className="eyebrow">{Number(q.avg_score_all_time).toFixed(1)}</span>
             )}
             {TREND_ARROW[q.trend] && <span>{TREND_ARROW[q.trend]}</span>}
+            {/* Глобальный охват: общий экран -- вся история качества. */}
+            {sparklinePoints(q.recent_scores) && (
+              <Sparkline points={sparklinePoints(q.recent_scores)} width={72} height={20} />
+            )}
           </div>
         </Link>
       ))}

@@ -16,11 +16,26 @@ def current_focus(user_id: str = Depends(get_current_user_id)):
     ADR v2 о ручном порядке фокуса)."""
     with get_conn(user_id) as cur:
         cur.execute(
-            """SELECT uq.id, cq.name,
-                      qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.last_expressed_at
+            """-- recent_scores -- ГЛОБАЛЬНЫЙ ряд (все проявления качества, без
+               -- привязки к цели или сезону): это общий экран, и охват здесь
+               -- должен соответствовать. LATERAL, а не подзапрос в SELECT:
+               -- нужен LIMIT на каждое качество, иначе у активного качества
+               -- в ответ уехала бы вся его история.
+               SELECT uq.id, cq.name,
+                      qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.last_expressed_at,
+                      r.recent_scores
                FROM user_qualities uq
                JOIN catalog_qualities cq ON cq.id = uq.catalog_quality_id
                LEFT JOIN quality_stats qs ON qs.quality_id = uq.id
+               LEFT JOIN LATERAL (
+                   SELECT array_agg(x.score) AS recent_scores
+                   FROM (SELECT qe.score
+                         FROM quality_expressions qe
+                         JOIN actions a ON a.id = qe.action_id
+                         WHERE qe.quality_id = uq.id
+                         ORDER BY a.occurred_at DESC, a.created_at DESC
+                         LIMIT 20) x
+               ) r ON true
                WHERE uq.focus_code = 'current_focus'
                ORDER BY cq.name->>'en'"""
         )

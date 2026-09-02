@@ -423,3 +423,30 @@ def test_patch_quality_with_empty_body_is_rejected(scenario):
     r = client.patch(f"/v1/qualities/{ctx['quality']['id']}", json={}, headers=h)
     assert r.status_code == 400
     assert r.json()["detail"]["code"] == "NOTHING_TO_UPDATE"
+
+
+# ---------- ряды для спарклайна: охват должен соответствовать экрану ----------
+
+def test_score_series_scope_global_vs_inside_a_goal(scenario):
+    """Спарклайн на общих экранах показывает ГЛОБАЛЬНЫЙ ряд качества, а на
+    карточке цели -- только проявления ВНУТРИ этой цели. Ряды приходят из
+    тех же запросов, что уже считают средние (отдельной сущности для
+    графика не заводили), поэтому легко случайно перепутать охват --
+    тест фиксирует, что они действительно разные."""
+    client, h, ctx = scenario
+    qid, gid = ctx["quality"]["id"], ctx["goal"]["id"]
+
+    # В сценарии уже есть два действия под целью (4, 4) и одно вне её (1).
+    goal_series = client.get(f"/v1/goals/{gid}/overview", headers=h).json()["qualities"][0]["recent_scores"]
+    focus_series = client.get("/v1/analytics/current-focus", headers=h).json()[0]["recent_scores"]
+    list_series = next(q for q in client.get("/v1/qualities", headers=h).json()
+                       if q["id"] == qid)["recent_scores"]
+
+    assert sorted(goal_series) == [4, 4]        # только внутри цели
+    assert sorted(focus_series) == [1, 4, 4]    # плюс действие вне цели
+    assert sorted(list_series) == [1, 4, 4]     # тот же глобальный охват
+    # Порядок -- новые первыми: фронт разворачивает ряд, чтобы линия
+    # читалась слева направо как течение времени. В фикстуре действие вне
+    # цели датировано 2026-08-01 (score 1) -- самое РАННЕЕ, значит в ряду
+    # оно должно стоять последним, а не первым.
+    assert focus_series[-1] == 1

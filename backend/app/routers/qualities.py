@@ -13,10 +13,23 @@ router = APIRouter(prefix="/qualities", tags=["qualities"])
 _SELECT = """
     SELECT uq.id, uq.catalog_quality_id, cq.name, cq.definition, uq.focus_code, uq.dev_priority_code, uq.source,
            qs.avg_score_all_time, qs.avg_score_30d, qs.trend, qs.stability, qs.confidence,
-           qs.last_expressed_at, qs.expression_count, qs.inversion_count, qs.inversion_count_30d
+           qs.last_expressed_at, qs.expression_count, qs.inversion_count, qs.inversion_count_30d,
+           r.recent_scores
     FROM user_qualities uq
     JOIN catalog_qualities cq ON cq.id = uq.catalog_quality_id
     LEFT JOIN quality_stats qs ON qs.quality_id = uq.id
+    -- Глобальный ряд последних оценок для спарклайна. LIMIT внутри
+    -- LATERAL обязателен: без него у давно ведущегося качества в каждый
+    -- ответ уходила бы вся история целиком.
+    LEFT JOIN LATERAL (
+        SELECT array_agg(x.score) AS recent_scores
+        FROM (SELECT qe.score
+              FROM quality_expressions qe
+              JOIN actions a ON a.id = qe.action_id
+              WHERE qe.quality_id = uq.id
+              ORDER BY a.occurred_at DESC, a.created_at DESC
+              LIMIT 20) x
+    ) r ON true
 """
 
 

@@ -137,6 +137,8 @@ class UserQualityOut(BaseModel):
     expression_count: Optional[int] = None   # число ступеней роста (основа среднего)
     inversion_count: Optional[int] = None    # обратные проявления -- вне шкалы роста
     inversion_count_30d: Optional[int] = None
+    recent_scores: Optional[list[int]] = None  # последние оценки, новые->старые
+                                               # (фронт разворачивает для спарклайна)
 
 
 # ---------- atomic action + nested expressions ----------

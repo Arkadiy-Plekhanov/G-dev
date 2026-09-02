@@ -4,6 +4,8 @@ import { useParams, Link } from 'react-router-dom'
 import { goalsApi, reflectionsApi } from '../api/resources'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import { BASELINE } from '../lib/displayMaps'
+import Sparkline from '../components/Sparkline'
+import { sparklinePoints } from '../lib/sparkline'
 
 
 export default function GoalDetailPage() {
@@ -27,15 +29,17 @@ export default function GoalDetailPage() {
   if (error) return <div className="screen"><ErrorBanner error={error} /></div>
   if (!data) return <CenterLoading />
 
-  const { goal, recent_actions: recentActions, qualities } = data
+  const { goal, recent_actions: recentActions, qualities: rawQualities } = data
   // Самая содержательная метрика продукта (§4.2): проявляет ли эта цель
   // в тебе лучшее или худшее. Один явный вывод сверху, а не строка в
   // таблице -- above_usual важнее для человека, чем below_usual/as_usual,
   // поэтому если оно есть хотя бы у одного качества, оно и выводится.
-  const withBaseline = qualities.filter((q) => q.vs_baseline)
-  const headline = withBaseline.find((q) => q.vs_baseline === 'above_usual')
-    || withBaseline.find((q) => q.vs_baseline === 'below_usual')
-    || withBaseline[0]
+  // Порядок: заметно выше обычного -> заметно ниже -> как обычно/без
+  // сравнения. Раньше самое примечательное выносилось отдельным блоком
+  // над списком, но показывало те же данные -- читалось как дубль.
+  const RANK = { above_usual: 0, below_usual: 1, as_usual: 2 }
+  const qualities = [...rawQualities].sort(
+    (a, b) => (RANK[a.vs_baseline] ?? 3) - (RANK[b.vs_baseline] ?? 3))
 
   return (
     <div className="screen">
@@ -48,22 +52,6 @@ export default function GoalDetailPage() {
         {goal.progress_pct != null && <span className="pill">{goal.progress_pct}%</span>}
       </div>
 
-      {headline && (
-        <Link
-          to={`/qualities/${headline.quality_id}`}
-          className="card card--tappable card-link"
-          style={{ borderLeft: `3px solid var(${BASELINE[headline.vs_baseline].colorVar})` }}
-        >
-          <div className="eyebrow">{headline.name.en}</div>
-          <div style={{ fontSize: '1.05rem', marginTop: 2 }}>
-            <span className={BASELINE[headline.vs_baseline].trendClass} style={{ marginRight: 6 }}>
-              {BASELINE[headline.vs_baseline].arrow}
-            </span>
-            {t(BASELINE[headline.vs_baseline].key)}
-          </div>
-        </Link>
-      )}
-
       <h3>{t('goals.recentActions')}</h3>
       {recentActions.length === 0 && <p className="empty-state">{t('home.noActions')}</p>}
       {recentActions.map((a) => (
@@ -73,30 +61,29 @@ export default function GoalDetailPage() {
         </Link>
       ))}
 
-      {qualities.filter((q) => q.quality_id !== headline?.quality_id).length > 0 && (
+      {qualities.length > 0 && (
         <>
-          <h3>{t('goals.qualitiesHere')}</h3>
-          {qualities.filter((q) => q.quality_id !== headline?.quality_id).map((q) => (
+          {/* Охват назван в ЗАГОЛОВКЕ секции, а не повторён в каждой строке:
+              для всех строк он одинаков, и «in this goal» на каждой съедал
+              место, которого на телефоне и так мало.
+              Отдельного «главного» качества сверху больше нет -- оно
+              показывало ровно то же, что и строка списка, только крупнее,
+              и читалось как дубль. Самое примечательное просто идёт
+              первым: сначала то, что заметно выше обычного, потом заметно
+              ниже, потом остальное. */}
+          <h3>{t('goals.qualityExpressionHere')}</h3>
+          {qualities.map((q) => (
             <Link key={q.quality_id} to={`/qualities/${q.quality_id}`} className="card card--tappable card-link stat-row">
               <div className="stat-row-name">{q.name.en}</div>
               <div className="stat-row-details">
-                {/* Стадия -- по ОБЩЕЙ статистике качества (avg_score_all_time),
-                    не по узкому срезу внутри этой цели (avg_in_goal). Раньше
-                    было наоборот: у качества с богатой историей в других
-                    целях/действиях здесь всегда писалось "not enough data
-                    yet", если внутри ИМЕННО ЭТОЙ цели было < 3 проявлений --
-                    даже когда общих данных давно достаточно. Теперь это два
-                    разных, оба осмысленных числа: устойчивая стадия качества
-                    в целом, и отдельно -- как оно ведёт себя именно здесь. */}
-                {/* Общая стадия качества здесь НЕ показывается: она про
-                    качество вообще и живёт на его собственной карточке, а
-                    этот экран отвечает на другой вопрос -- как качество
-                    ведёт себя ИМЕННО ЗДЕСЬ. Три величины в строке
-                    (стадия + значение в цели + сравнение) были и
-                    избыточны по смыслу, и физически не помещались на
-                    телефоне: правая часть выдавливала название в колонку
-                    шириной в букву. */}
-                <span className="eyebrow">{t('goals.inThisGoal', { avg: Number(q.avg_in_goal).toFixed(1) })}</span>
+                {/* Ряд ТЕМАТИЧЕСКИЙ -- только проявления внутри этой цели
+                    (см. recent_scores в per_goal CTE). На общих экранах в
+                    том же компоненте глобальный ряд: охват соответствует
+                    смыслу экрана. */}
+                {sparklinePoints(q.recent_scores) && (
+                  <Sparkline points={sparklinePoints(q.recent_scores)} width={72} height={20} />
+                )}
+                <span className="eyebrow">{Number(q.avg_in_goal).toFixed(1)}</span>
                 {q.vs_baseline && (
                   <span className={`pill${q.vs_baseline === 'below_usual' ? ' pill--brick' : q.vs_baseline === 'above_usual' ? ' pill--gold' : ''}`}>
                     {t(BASELINE[q.vs_baseline].key)}
@@ -108,12 +95,6 @@ export default function GoalDetailPage() {
         </>
       )}
 
-      {/* §4 обратной связи: "статистика в цели может включать в себя
-          объединённую статистику всех подцелей вместе... а также разбивку
-          статистик подцелей отдельно". Только когда у цели ЕСТЬ подцели --
-          бэкенд возвращает subtree=null для листовых целей (обычный,
-          самый частый случай), иначе это была бы точная копия уже
-          показанных выше чисел. */}
       {data.subtree && (
         <>
           <h3>{t('goals.combinedWithSubgoals', { count: data.subtree.descendant_goal_count })}</h3>
@@ -129,7 +110,7 @@ export default function GoalDetailPage() {
                     избыточны по смыслу, и физически не помещались на
                     телефоне: правая часть выдавливала название в колонку
                     шириной в букву. */}
-                <span className="eyebrow">{t('goals.inThisGoal', { avg: Number(q.avg_in_goal).toFixed(1) })}</span>
+                <span className="eyebrow">{Number(q.avg_in_goal).toFixed(1)}</span>
                 {q.vs_baseline && (
                   <span className={`pill${q.vs_baseline === 'below_usual' ? ' pill--brick' : q.vs_baseline === 'above_usual' ? ' pill--gold' : ''}`}>
                     {t(BASELINE[q.vs_baseline].key)}
