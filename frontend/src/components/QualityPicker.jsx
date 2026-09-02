@@ -39,7 +39,12 @@ export default function QualityPicker({ myQualities, excludeIds, onPick, onAdopt
       // на деле показывал те же шесть фокусных, и смысл поиска пропадал
       // (повторявшаяся обратная связь). Здесь -- только то, чего на экране
       // ещё нет: свои внефокусные и весь остальной каталог.
-      rest: available.filter((mq) => mq.focus_code !== 'current_focus' && matches(mq.name.en)),
+      // Оба списка -- ТОЛЬКО по запросу. Без запроса пикер пуст: это
+      // поиск по всем 169, а не «ещё один список качеств». Раньше `rest`
+      // показывался сразу и без запроса -- то есть внефокусные качества
+      // вываливались выпадающим списком, ровно то дублирующее поведение,
+      // которое до этого убрали у фокусных.
+      rest: q ? available.filter((mq) => mq.focus_code !== 'current_focus' && matches(mq.name.en)) : [],
       fromCatalog: q
         ? catalog.filter((cq) => !mineByCatalogId.has(cq.id) && matches(cq.name.en))
         : [],
@@ -73,7 +78,7 @@ export default function QualityPicker({ myQualities, excludeIds, onPick, onAdopt
         style={{ width: '100%', padding: 10, border: '1px solid var(--line)', borderRadius: 6, marginBottom: 8 }}
       />
       {error && <p className="error-text">{error}</p>}
-      {nothingAtAll && <p style={{ margin: '8px 0' }}>{t('action.noQualityMatches')}</p>}
+      {nothingAtAll && <p style={{ margin: '8px 0' }}>{query.trim() ? t('action.noQualityMatches') : t('action.typeToSearch')}</p>}
 
       {rest.map((mq) => (
         <div key={mq.id} className="quality-search-result" onClick={() => onPick(mq)}>

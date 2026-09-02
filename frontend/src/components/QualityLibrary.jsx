@@ -43,8 +43,8 @@ export default function QualityLibrary({ title, searchPlaceholder, footer }) {
     // остальные 160+ нужны заметно реже. Внутри групп -- алфавит,
     // как в каталоге.
     return [
-      ...matched.filter((c) => adoptedByCatalogId.has(c.id)),
-      ...matched.filter((c) => !adoptedByCatalogId.has(c.id)),
+      ...matched.filter((c) => adoptedByCatalogId.get(c.id)?.focus_code === 'current_focus'),
+      ...matched.filter((c) => adoptedByCatalogId.get(c.id)?.focus_code !== 'current_focus'),
     ]
   }, [catalog, adoptedByCatalogId, query])
 
@@ -53,9 +53,18 @@ export default function QualityLibrary({ title, searchPlaceholder, footer }) {
     setBusyId(catalogQuality.id)
     try {
       const existing = adoptedByCatalogId.get(catalogQuality.id)
-      if (existing) {
-        await qualitiesApi.remove(existing.id)
-        setAdopted((prev) => { const next = new Map(prev); next.delete(catalogQuality.id); return next })
+      if (existing && existing.focus_code === 'current_focus') {
+        // Убрать из фокуса -- НЕ удалить качество. Раньше здесь стоял
+        // qualitiesApi.remove(), и это было тихой потерей данных:
+        // quality_expressions.quality_id объявлен ON DELETE CASCADE, то
+        // есть нажатие «✓» стирало ВСЮ историю проявлений качества. При
+        // этом такая же на вид кнопка на карточке качества всего лишь
+        // меняла focus_code. Два одинаковых жеста, один разрушительный.
+        const updated = await qualitiesApi.update(existing.id, { focus_code: 'not_in_focus' })
+        setAdopted((prev) => new Map(prev).set(catalogQuality.id, updated))
+      } else if (existing) {
+        const updated = await qualitiesApi.update(existing.id, { focus_code: 'current_focus' })
+        setAdopted((prev) => new Map(prev).set(catalogQuality.id, updated))
       } else {
         const uq = await qualitiesApi.adopt({ catalog_quality_id: catalogQuality.id, focus_code: 'current_focus' })
         setAdopted((prev) => new Map(prev).set(catalogQuality.id, uq))
@@ -85,6 +94,7 @@ export default function QualityLibrary({ title, searchPlaceholder, footer }) {
 
       {visible.map((c) => {
         const mine = adoptedByCatalogId.get(c.id)
+        const inFocus = mine?.focus_code === 'current_focus'
         return (
           <div key={c.id} className="card stat-row">
             {/* Название ведёт на карточку качества: у принятого -- по
@@ -103,9 +113,9 @@ export default function QualityLibrary({ title, searchPlaceholder, footer }) {
               style={{ width: 'auto', flexShrink: 0 }}
               disabled={busyId === c.id}
               onClick={() => toggle(c)}
-              aria-label={mine ? t('qualities.removeFromFocus') : t('qualities.addToFocus')}
+              aria-label={inFocus ? t('qualities.removeFromFocus') : t('qualities.addToFocus')}
             >
-              {mine ? '✓' : '+'}
+              {inFocus ? '✓' : '+'}
             </button>
           </div>
         )

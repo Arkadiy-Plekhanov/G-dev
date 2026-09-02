@@ -54,7 +54,8 @@
     "noQualityMatches": "Nothing matches.",
     "fromCatalog": "From the catalog",
     "addToMine": "add",
-    "noQualities": "No qualities recorded for this one."
+    "noQualities": "No qualities recorded for this one.",
+    "typeToSearch": "Start typing to search all 169 qualities."
   },
   "goals": {
     "title": "Goals",

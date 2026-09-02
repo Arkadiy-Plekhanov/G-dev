@@ -450,3 +450,38 @@ def test_score_series_scope_global_vs_inside_a_goal(scenario):
     # цели датировано 2026-08-01 (score 1) -- самое РАННЕЕ, значит в ряду
     # оно должно стоять последним, а не первым.
     assert focus_series[-1] == 1
+
+
+# ---------- снятие фокуса НЕ должно стирать историю ----------
+
+def test_removing_from_focus_preserves_expression_history(scenario):
+    """Найдено ручным тестированием. В библиотеке качеств кнопка «убрать из
+    фокуса» вызывала DELETE /qualities/{id}, а не смену focus_code -- и это
+    была тихая потеря данных: quality_expressions.quality_id объявлен
+    ON DELETE CASCADE, то есть вместе с качеством стиралась ВСЯ история его
+    проявлений. Такая же на вид кнопка на карточке качества всего лишь
+    меняла focus_code.
+
+    Тест фиксирует правильное поведение: снятие фокуса -- это PATCH,
+    история остаётся нетронутой, и качество можно вернуть в фокус со всей
+    накопленной статистикой."""
+    client, h, ctx = scenario
+    qid = ctx["quality"]["id"]
+
+    before = client.get(f"/v1/qualities/{qid}/overview", headers=h).json()
+    assert before["quality"]["expression_count"] == 3
+    assert len(before["recent_expressions"]) == 3
+
+    r = client.patch(f"/v1/qualities/{qid}", json={"focus_code": "not_in_focus"}, headers=h)
+    assert r.status_code == 200
+    assert r.json()["focus_code"] == "not_in_focus"
+
+    after = client.get(f"/v1/qualities/{qid}/overview", headers=h).json()
+    assert after["quality"]["expression_count"] == 3          # история цела
+    assert len(after["recent_expressions"]) == 3
+    assert after["quality"]["avg_score_all_time"] == before["quality"]["avg_score_all_time"]
+
+    # Возврат в фокус -- со всей накопленной статистикой, не с нуля.
+    client.patch(f"/v1/qualities/{qid}", json={"focus_code": "current_focus"}, headers=h)
+    back = client.get("/v1/analytics/current-focus", headers=h).json()
+    assert any(x["id"] == qid for x in back)
