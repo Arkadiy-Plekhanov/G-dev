@@ -4,6 +4,8 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { cyclesApi, goalsApi, qualitiesApi } from '../api/resources'
 import { get } from '../api/client'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
+import SeasonMemberPicker from '../components/SeasonMemberPicker'
+import { growthStage } from '../lib/growthStage'
 
 /** Общая форма для создания (/cycles/new) и редактирования (/cycles/:id/edit)
  * -- один компонент, режим определяется наличием :id в URL. Экономит
@@ -151,24 +153,36 @@ export default function SeasonFormPage() {
 
         <div className="field">
           <label>{t('seasons.goals')}</label>
-          {goals.length === 0 && <p className="eyebrow">{t('seasons.noneSelected')}</p>}
-          {goals.map((g) => (
-            <label key={g.id} className="checkbox-row">
-              <input type="checkbox" checked={goalIds.has(g.id)} onChange={() => toggle(goalIds, setGoalIds, g.id)} />
-              {g.name}
-            </label>
-          ))}
+          <SeasonMemberPicker
+            items={goals.map((g) => ({ id: g.id, label: g.name, sub: g.status_code }))}
+            selectedIds={goalIds}
+            onToggle={(id) => toggle(goalIds, setGoalIds, id)}
+            searchPlaceholder={t('seasons.searchGoals')}
+            emptyText={t('seasons.noGoalsYet')}
+          />
         </div>
 
         <div className="field">
           <label>{t('seasons.qualities')}</label>
-          {myQualities.length === 0 && <p className="eyebrow">{t('seasons.noneSelected')}</p>}
-          {myQualities.map((q) => (
-            <label key={q.id} className="checkbox-row">
-              <input type="checkbox" checked={qualityIds.has(q.id)} onChange={() => toggle(qualityIds, setQualityIds, q.id)} />
-              {q.name.en}
-            </label>
-          ))}
+          {/* Список -- ВСЕ качества, не только фокусные. Ограничение фокусом
+              было искусственным: сезон длинный, фокус внутри него меняется
+              посменно, и брать в сезон качество, которого сегодня нет в
+              фокусе, -- нормальный сценарий. Подпись показывает текущий
+              фокус и стадию, чтобы два состояния было видно и не спутать. */}
+          <SeasonMemberPicker
+            items={myQualities.map((q) => ({
+              id: q.id,
+              label: q.name.en,
+              sub: [
+                q.focus_code === 'current_focus' ? t('qualities.inFocus') : null,
+                growthStage(q) ? t(`stats.stage.${growthStage(q)}`) : null,
+              ].filter(Boolean).join(' · ') || null,
+            }))}
+            selectedIds={qualityIds}
+            onToggle={(id) => toggle(qualityIds, setQualityIds, id)}
+            searchPlaceholder={t('action.searchAllQualities')}
+            emptyText={t('seasons.noQualitiesYet')}
+          />
         </div>
 
         <button type="submit" className="btn btn-primary" disabled={saving || !name.trim()} style={{ width: '100%' }}>

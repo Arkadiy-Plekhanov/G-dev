@@ -81,7 +81,8 @@
     "byContext": "By context",
     "average": "Average",
     "addToFocus": "Add to focus",
-    "removeFromFocus": "Remove from focus"
+    "removeFromFocus": "Remove from focus",
+    "inFocus": "in focus"
   },
   "profile": {
     "title": "Profile",
@@ -195,7 +196,12 @@
     "create": "Start season",
     "save": "Save",
     "delete": "Delete season",
-    "deleteConfirm": "Delete this season? Actions and reflections stay -- only the season itself goes."
+    "deleteConfirm": "Delete this season? Actions and reflections stay -- only the season itself goes.",
+    "addToSeason": "Add to this season",
+    "removeFromSeason": "Remove from this season",
+    "searchGoals": "Search goals…",
+    "noGoalsYet": "No goals yet — create one first.",
+    "noQualitiesYet": "No qualities yet."
   },
   "reflections": {
     "title": "Reflections",

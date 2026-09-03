@@ -485,3 +485,46 @@ def test_removing_from_focus_preserves_expression_history(scenario):
     client.patch(f"/v1/qualities/{qid}", json={"focus_code": "current_focus"}, headers=h)
     back = client.get("/v1/analytics/current-focus", headers=h).json()
     assert any(x["id"] == qid for x in back)
+
+
+# ---------- находки внешнего аудита (проверены и закрыты) ----------
+
+def test_patch_cycle_returns_attached_goals_and_qualities(scenario):
+    """PATCH возвращал сезон БЕЗ привязок, хотя схема их объявляет -- форма
+    редактирования получала пустые списки сразу после успешного сохранения
+    и показывала, будто привязки исчезли."""
+    client, h, ctx = scenario
+    cycle = client.post("/v1/cycles", json={
+        "name": "S", "goal_ids": [ctx["goal"]["id"]], "quality_ids": [ctx["quality"]["id"]],
+    }, headers=h).json()
+
+    r = client.patch(f"/v1/cycles/{cycle['id']}", json={
+        "name": "S renamed", "goal_ids": [ctx["goal"]["id"]], "quality_ids": [ctx["quality"]["id"]],
+    }, headers=h)
+    assert r.status_code == 200
+    assert len(r.json()["goals"]) == 1
+    assert len(r.json()["qualities"]) == 1
+
+
+def test_adopt_ideal_response_keeps_ideal_id(scenario):
+    """AdoptIdealOut не объявлял ideal_id, и response_model начал молча его
+    вырезать -- схема, отстающая от реального ответа, не просто неточна,
+    она УДАЛЯЕТ данные."""
+    client, h, _ = scenario
+    ideals = client.get("/v1/catalog/ideals", headers=h).json()
+    r = client.post("/v1/onboarding/adopt-ideal", json={"ideal_id": ideals[0]["id"]}, headers=h)
+    assert r.status_code == 201
+    assert r.json()["ideal_id"] == ideals[0]["id"]
+
+
+def test_export_includes_season_links(scenario):
+    """Выгрузка (GDPR ст. 20) содержала сезоны, но не связующие таблицы --
+    из неё нельзя было восстановить, какие цели и качества были к сезону
+    привязаны. Полнота здесь -- часть права на переносимость."""
+    client, h, ctx = scenario
+    client.post("/v1/cycles", json={
+        "name": "S", "goal_ids": [ctx["goal"]["id"]], "quality_ids": [ctx["quality"]["id"]],
+    }, headers=h)
+    data = client.get("/v1/me/export", headers=h).json()
+    assert len(data["cycle_goals"]) == 1
+    assert len(data["cycle_qualities"]) == 1

@@ -99,8 +99,15 @@ html {
 /* [iOS Safari] input[type=date] получает собственную внутреннюю ширину и
    оформление, из-за чего поле даты выходило шире соседних select и
    textarea в той же форме. Наблюдалось: «Log an action», создание сезона.
-   Безвредно в других браузерах: там поля и так одинаковой ширины. */
-.field input, .field select {
+   Безвредно в других браузерах: там поля и так одинаковой ширины.
+
+   Селектор строго по type=date. Сначала здесь стояло `.field input`, и
+   это сломало ЧЕКБОКСЫ в форме сезона: appearance: none снимает нативную
+   отрисовку, и галочки стали невидимы. Урок общего свойства: правило в
+   слое нормализации должно указывать ровно на тот элемент, который
+   наблюдался сломанным, а не на его широкую категорию -- иначе чинишь
+   одно и ломаешь соседнее в той же форме. */
+.field input[type="date"] {
   -webkit-appearance: none;
   appearance: none;
 }
@@ -245,6 +252,16 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
   justify-content: space-between;
   gap: var(--space-2) var(--space-3);
 }
+/* Строка «содержимое + одна кнопка действия» (библиотека качеств,
+   онбординг). Перенос здесь вреден: кнопка «+» уезжала ПОД текст, съедая
+   лишнюю строку на каждом из 169 качеств. flex-wrap: wrap в .stat-row
+   нужен для карточки цели, где справа несколько элементов и перенос
+   спасает от расплющивания названия -- а тут элемент один, переносить
+   нечего. */
+.stat-row--action {
+  flex-wrap: nowrap;
+  align-items: center;
+}
 /* Побеждает .stat-row, а не .card-link (тот задаёт display: block).
    Специфичность, а не порядок в файле: иначе поведение зависело бы от
    того, кто где написан, и молча ломалось бы при перестановке правил. */
@@ -304,18 +321,6 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
 }
 .field input, .field select { min-height: 44px; }
 .field textarea { min-height: 80px; resize: vertical; }
-/* Строка "чекбокс + подпись" в формах множественного выбора (сезоны):
-   нативный чекбокс сам по себе ~16-20px -- цель касания даёт вся строка,
-   не сам квадратик. */
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 44px;
-  cursor: pointer;
-}
-.checkbox-row input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
-
 .pill {
   text-decoration: none;
   display: inline-flex;

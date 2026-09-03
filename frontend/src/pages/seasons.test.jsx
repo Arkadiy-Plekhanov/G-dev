@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { mintSession, setSession } from '../test/helpers'
@@ -35,8 +35,15 @@ describe('Seasons — creation and one-active-season rule, against the real back
 
     renderAt('/cycles/new')
     await user.type(await screen.findByPlaceholderText(/Spring focus/i), 'Launch season')
-    await user.click(screen.getByText(goal.name))
-    await user.click(screen.getByText(quality.name.en))
+    // Выбор -- кнопкой «+» на карточке, как на странице качеств и в
+    // онбординге. Раньше здесь были чекбоксы -- единственное место в
+    // приложении с такой механикой. Кнопок с подписью «Add to this
+    // season» на форме две (цели и качества), поэтому ищем внутри
+    // конкретной карточки, а не по всей странице.
+    const goalCard = (await screen.findByText(goal.name)).closest('.card')
+    await user.click(within(goalCard).getByRole('button'))
+    const qualityCard = screen.getByText(quality.name.en).closest('.card')
+    await user.click(within(qualityCard).getByRole('button'))
     await user.click(screen.getByRole('button', { name: /Start season/i }))
 
     // Успешное создание -- редирект на карточку, где виден реальный состав.

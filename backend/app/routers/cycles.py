@@ -106,7 +106,12 @@ def update_cycle(cycle_id: str, body: CycleIn, user_id: str = Depends(get_curren
         raise_from_db_error(e)
     with get_conn(user_id) as cur:
         cur.execute(_SELECT + " WHERE id = %s", (cycle_id,))
-        return cur.fetchone()
+        cycle = cur.fetchone()
+        # Привязки -- как в GET и POST. Раньше PATCH возвращал цикл БЕЗ них,
+        # то есть форма редактирования получала пустые goals/qualities сразу
+        # после успешного сохранения и показывала, будто привязки исчезли.
+        goals, qualities = _attached(cur, cycle_id)
+    return {**cycle, "goals": goals, "qualities": qualities}
 
 
 @router.delete("/{cycle_id}", status_code=204)

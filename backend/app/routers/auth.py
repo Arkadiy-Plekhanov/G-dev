@@ -176,6 +176,14 @@ def export_account(user_id: str = Depends(get_current_user_id)):
 
         cur.execute("SELECT * FROM development_cycles WHERE user_id = %s ORDER BY created_at", (user_id,))
         cycles = cur.fetchall()
+        # Связующие таблицы -- иначе из выгрузки не восстановить, какие цели
+        # и качества были привязаны к сезону: сами сезоны есть, связи нет.
+        # Право на переносимость (GDPR ст. 20) подразумевает полноту, а не
+        # только основные таблицы.
+        cur.execute("SELECT * FROM cycle_goals WHERE user_id = %s", (user_id,))
+        cycle_goals = cur.fetchall()
+        cur.execute("SELECT * FROM cycle_qualities WHERE user_id = %s", (user_id,))
+        cycle_qualities = cur.fetchall()
 
         cur.execute("SELECT * FROM reflections WHERE user_id = %s ORDER BY occurred_at", (user_id,))
         reflections = cur.fetchall()
@@ -188,6 +196,8 @@ def export_account(user_id: str = Depends(get_current_user_id)):
         "actions": actions,
         "quality_expressions": expressions,
         "development_cycles": cycles,
+        "cycle_goals": cycle_goals,
+        "cycle_qualities": cycle_qualities,
         "reflections": reflections,
     }
 

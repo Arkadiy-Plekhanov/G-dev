@@ -441,6 +441,11 @@ class ScoreLegendOut(BaseModel):
 
 
 class AdoptIdealOut(BaseModel):
+    # ideal_id роутер возвращал всегда, но схема его не объявляла -- и
+    # после подключения response_model поле стало молча вырезаться.
+    # Тот же класс, что был у CycleOut: схема, отстающая от реального
+    # ответа, не просто неточна, она УДАЛЯЕТ данные.
+    ideal_id: str
     adopted_quality_ids: list[str] = []
     already_had: int
 

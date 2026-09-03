@@ -96,7 +96,7 @@ export default function QualityLibrary({ title, searchPlaceholder, footer }) {
         const mine = adoptedByCatalogId.get(c.id)
         const inFocus = mine?.focus_code === 'current_focus'
         return (
-          <div key={c.id} className="card stat-row">
+          <div key={c.id} className="card stat-row stat-row--action">
             {/* Название ведёт на карточку качества: у принятого -- по
                 uq.id (там статистика), у непринятого -- по id каталога
                 (там определение и та же кнопка добавления). */}
