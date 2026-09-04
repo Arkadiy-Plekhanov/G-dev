@@ -27,7 +27,7 @@ frontend `https://g-dev.arkadiy-plekhanov.workers.dev` · backend
   done and the guide reflects exactly how, including the real failures hit along the way
   and their actual causes.
 - **Local development:** `cp .env.example .env`, then `make dev-up` (Docker/Podman
-  required). `make dev-test` runs both test suites (77 backend + 23 frontend).
+  required). `make dev-test` runs both test suites (77 backend + 24 frontend).
 - **Resetting/reseeding the Neon staging database:** `scripts/reset-neon.sh` -- one
   command, verifies its own result (169 catalog qualities, 3 ideals), fails loudly instead
   of silently if anything doesn't match.

@@ -382,7 +382,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 /* Кнопки шкалы: раньше это были жёсткие круги 34x34 под ОДНУ ЦИФРУ.
    После перехода на именованные ступени (Spark/Kindling/Flame/Gem) слова
@@ -392,7 +392,15 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
    ступени переносились на вторую строку, а не сжимались в кашу. */
 .rating-zero, .rating-dot {
   min-height: 44px;
-  padding: 6px 12px;
+  /* Padding и gap подобраны так, чтобы ВСЕ ПЯТЬ ступеней помещались в
+     одну строку на самом узком используемом экране. Считано, а не на глаз:
+     при ширине телефона 430pt за вычетом отступов .screen (16×2) и .card
+     (16×2) остаётся 366px, а пять пилюль с padding 12px по бокам и gap 8px
+     занимали 374px -- «Gem» уезжал на вторую строку. Не хватало восьми
+     пикселей. Сначала я списал это на автоподгон текста в WebKit и добавил
+     text-size-adjust -- диагноз был неверный: перенос воспроизводился и в
+     Chrome, потому что причина арифметическая, а не в движке. */
+  padding: 6px 9px;
   border-radius: 17px;
   border: 1.5px solid var(--line);
   background: var(--paper-raised);
@@ -411,7 +419,10 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; }
 .rating-zero {
   border-color: var(--brick);
   color: var(--brick);
-  margin-right: var(--space-4);
+  /* Отделяет «вне шкалы роста» от ступеней 1-4. space-3 вместо space-4:
+     разрыв всё ещё явно читается, но не съедает те пиксели, из-за которых
+     пятая ступень не помещалась в строку. */
+  margin-right: var(--space-3);
 }
 .rating-zero.selected { background: var(--brick); color: var(--paper-raised); }
 .rating-dot.selected { background: var(--growth); border-color: var(--growth); color: var(--paper-raised); }

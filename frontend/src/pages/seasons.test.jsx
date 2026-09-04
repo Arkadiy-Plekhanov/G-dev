@@ -31,7 +31,7 @@ describe('Seasons — creation and one-active-season rule, against the real back
     const user = userEvent.setup()
     const goal = await goalsApi.create({ name: 'Ship the launch', status_code: 'active', priority_code: 'p2_high' })
     const catalog = await catalogApi.qualities()
-    const quality = await qualitiesApi.adopt({ catalog_quality_id: catalog[0].id })
+    const quality = await qualitiesApi.adopt({ catalog_quality_id: catalog[0].id, focus_code: 'current_focus' })
 
     renderAt('/cycles/new')
     await user.type(await screen.findByPlaceholderText(/Spring focus/i), 'Launch season')
@@ -78,5 +78,43 @@ describe('Seasons — creation and one-active-season rule, against the real back
 
     const activeCard = await screen.findByText('Right now')
     expect(activeCard.closest('a')).toHaveTextContent('Active')
+  })
+
+  it('a quality that is not adopted yet can be picked from the full catalog: it is adopted silently and reaches the season with the right id', async () => {
+    const user = userEvent.setup()
+    // Ничего не принимаем заранее -- берём качество прямо из каталога.
+    const catalog = await catalogApi.qualities()
+    const notAdopted = catalog.find((c) => c.name.en === 'Patience') || catalog[10]
+
+    renderAt('/cycles/new')
+    await user.type(await screen.findByPlaceholderText(/Spring focus/i), 'Catalog season')
+
+    // По умолчанию (§ обратная связь: "Much like in Action Log") видны
+    // только фокус-качества -- полный каталог открывается поиском.
+    await user.click(screen.getByRole('button', { name: /Search all qualities/i }))
+    const search = screen.getByPlaceholderText(/Search all qualities/i)
+    await user.type(search, notAdopted.name.en)
+    await user.click(await screen.findByText(notAdopted.name.en))
+
+    // Выбор непринятого качества принимает его асинхронно (adoptThenPick),
+    // и всё это время строка результата поиска ОСТАЁТСЯ на экране -- имя
+    // видно и до, и после завершения, просто меняется подпись на "Saving…".
+    // Ждать появления одного лишь текста недостаточно, это и вызвало
+    // прошлое падение: тест переходил к сохранению раньше, чем выбор
+    // реально осел, и качество не попадало в сезон. Однозначный сигнал --
+    // поиск закрывается (кнопка "Search all qualities" возвращается)
+    // ТОЛЬКО после того, как onPick действительно сработал.
+    await screen.findByRole('button', { name: /Search all qualities/i })
+    // И качество теперь видно как ВЫБРАННАЯ строка (кнопка "✓", не "+").
+    const row = (await screen.findByText(notAdopted.name.en)).closest('.card')
+    expect(within(row).getByRole('button', { name: /Remove from this season/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Start season/i }))
+
+    // Ключевое: у принятого и каталожного качества id из РАЗНЫХ пространств,
+    // а сезон хранит id принятого. Если бы качество ушло с catalog_quality_id,
+    // привязка бы не сохранилась -- проверяем, что оно реально на карточке.
+    await screen.findByText('Catalog season')
+    expect(await screen.findByText(notAdopted.name.en)).toBeInTheDocument()
   })
 })

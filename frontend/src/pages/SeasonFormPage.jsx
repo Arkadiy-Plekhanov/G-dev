@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { cyclesApi, goalsApi, qualitiesApi } from '../api/resources'
+import { cyclesApi, goalsApi, qualitiesApi, catalogApi } from '../api/resources'
 import { get } from '../api/client'
 import { CenterLoading, ErrorBanner } from '../components/Feedback'
 import SeasonMemberPicker from '../components/SeasonMemberPicker'
-import { growthStage } from '../lib/growthStage'
+import QualityPicker from '../components/QualityPicker'
 
 /** Общая форма для создания (/cycles/new) и редактирования (/cycles/:id/edit)
  * -- один компонент, режим определяется наличием :id в URL. Экономит
@@ -24,6 +24,8 @@ export default function SeasonFormPage() {
   const [statusOptions, setStatusOptions] = useState([])
   const [goals, setGoals] = useState([])
   const [myQualities, setMyQualities] = useState([])
+  const [catalog, setCatalog] = useState([])
+  const [picking, setPicking] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -42,12 +44,19 @@ export default function SeasonFormPage() {
       get('/reference/options/cycle_status'),
       goalsApi.list(),
       qualitiesApi.list(),
+      // Весь каталог, а не только принятые: поиск в сезоне должен доставать
+      // любое из 169 качеств. Ограничение принятыми было тем же
+      // искусственным сужением, что мы убрали на странице качеств --
+      // сезон длинный, и брать в него качество, которого сейчас нет ни в
+      // фокусе, ни в списке принятых, совершенно нормально.
+      catalogApi.qualities(),
     ]
     Promise.all(isEdit ? [...base, cyclesApi.get(id)] : base)
-      .then(([statuses, g, q, existing]) => {
+      .then(([statuses, g, q, catalog, existing]) => {
         setStatusOptions(statuses)
         setGoals(g)
         setMyQualities(q)
+        setCatalog(catalog)
         if (existing) {
           setName(existing.name)
           setStartDate(existing.start_date || '')
@@ -68,6 +77,8 @@ export default function SeasonFormPage() {
     next.has(itemId) ? next.delete(itemId) : next.add(itemId)
     setSet(next)
   }
+
+
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -90,6 +101,31 @@ export default function SeasonFormPage() {
       setError(err)
       setSaving(false)
     }
+  }
+
+  // По умолчанию видны только качества в фокусе -- тот же принцип, что
+  // на экране логирования действия: то, чем человек занят прямо сейчас,
+  // должно быть под рукой без поиска. Раньше здесь сразу показывались ВСЕ
+  // качества (со своей статистикой у принятых, с определением у остальных)
+  // -- то есть страница на 169 карточек до всякого поиска, ровно то, от
+  // чего мы уходили на странице Qualities.
+  //
+  // Уже выбранное для сезона качество, которого нет в фокусе, тоже
+  // остаётся видимым -- иначе при редактировании существующего сезона
+  // выбор молча пропадал бы из виду (хотя оставался бы в самих данных).
+  const visibleQualities = myQualities.filter(
+    (q) => q.focus_code === 'current_focus' || qualityIds.has(q.id),
+  )
+  const pickerExcludeIds = new Set(myQualities.map((q) => q.id))
+
+  function toggleQuality(userQualityId) {
+    toggle(qualityIds, setQualityIds, userQualityId)
+  }
+
+  function onQualityPicked(mq) {
+    setMyQualities((prev) => (prev.some((q) => q.id === mq.id) ? prev : [...prev, mq]))
+    setQualityIds((prev) => new Set(prev).add(mq.id))
+    setPicking(false)
   }
 
   if (loading) return <CenterLoading />
@@ -164,25 +200,42 @@ export default function SeasonFormPage() {
 
         <div className="field">
           <label>{t('seasons.qualities')}</label>
-          {/* Список -- ВСЕ качества, не только фокусные. Ограничение фокусом
-              было искусственным: сезон длинный, фокус внутри него меняется
-              посменно, и брать в сезон качество, которого сегодня нет в
-              фокусе, -- нормальный сценарий. Подпись показывает текущий
-              фокус и стадию, чтобы два состояния было видно и не спутать. */}
-          <SeasonMemberPicker
-            items={myQualities.map((q) => ({
-              id: q.id,
-              label: q.name.en,
-              sub: [
-                q.focus_code === 'current_focus' ? t('qualities.inFocus') : null,
-                growthStage(q) ? t(`stats.stage.${growthStage(q)}`) : null,
-              ].filter(Boolean).join(' · ') || null,
-            }))}
-            selectedIds={qualityIds}
-            onToggle={(id) => toggle(qualityIds, setQualityIds, id)}
-            searchPlaceholder={t('action.searchAllQualities')}
-            emptyText={t('seasons.noQualitiesYet')}
-          />
+          {/* По умолчанию видны только качества в фокусе -- тот же паттерн,
+              что уже проверен на экране логирования действия («Much like
+              in Action Log»): то, чем человек занят сейчас, доступно сразу
+              одним тапом, без похода в поиск. Полный каталог из 169 --
+              через явный поиск ниже, а не вываливается на страницу заранее. */}
+          {visibleQualities.length === 0 && (
+            <p className="eyebrow" style={{ marginBottom: 8 }}>{t('qualities.noFocus')}</p>
+          )}
+          {visibleQualities.map((q) => {
+            const picked = qualityIds.has(q.id)
+            return (
+              <div key={q.id} className="card stat-row stat-row--action">
+                <div className="stat-row-name">
+                  <div>{q.name.en}</div>
+                  {q.focus_code === 'current_focus' && <span className="eyebrow">{t('qualities.inFocus')}</span>}
+                </div>
+                <button
+                  type="button"
+                  className={picked ? 'btn btn-primary' : 'btn btn-secondary'}
+                  style={{ width: 'auto', flexShrink: 0 }}
+                  onClick={() => toggleQuality(q.id)}
+                  aria-label={picked ? t('seasons.removeFromSeason') : t('seasons.addToSeason')}
+                >
+                  {picked ? '✓' : '+'}
+                </button>
+              </div>
+            )
+          })}
+          {picking ? (
+            <QualityPicker myQualities={myQualities} excludeIds={pickerExcludeIds} onPick={onQualityPicked}
+                           onAdopted={(q) => setMyQualities((prev) => [...prev, q])} />
+          ) : (
+            <button type="button" className="btn btn-secondary" onClick={() => setPicking(true)}>
+              {t('action.searchAllQualities')}
+            </button>
+          )}
         </div>
 
         <button type="submit" className="btn btn-primary" disabled={saving || !name.trim()} style={{ width: '100%' }}>

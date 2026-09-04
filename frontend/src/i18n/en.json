@@ -82,7 +82,8 @@
     "average": "Average",
     "addToFocus": "Add to focus",
     "removeFromFocus": "Remove from focus",
-    "inFocus": "in focus"
+    "inFocus": "in focus",
+    "noFocus": "No qualities in focus yet — search below."
   },
   "profile": {
     "title": "Profile",
