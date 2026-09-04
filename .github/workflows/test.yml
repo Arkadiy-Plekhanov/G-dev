@@ -45,15 +45,78 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    # Frontend tests run against a LIVE backend and a real database -- they are
+    # integration tests, not unit tests with mocks (see frontend/README.md and
+    # src/test/helpers.js: every test mints a real user and a real token pair).
+    # That is why this job needs the same Postgres service and the same migration
+    # step as the backend job: without them the suite cannot run at all.
+    #
+    # This gate was missing for a long time and it cost us. Every regression
+    # shipped in recent rounds -- season checkboxes made invisible by a too-broad
+    # `appearance: none`, the "+" button wrapping under the text, `CycleOut` and
+    # `AdoptIdealOut` silently dropping fields once response_model was wired --
+    # would have been caught here in minutes. Instead they reached the owner's
+    # device or an external audit. Keep this job green; do not disable it to
+    # "unblock" a merge.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: selfdev
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Python is needed twice over: to apply migrations, and because
+      # src/test/helpers.js shells out to src/test/mint_session.py for every
+      # test to create a real session.
+      - name: Install Python deps
+        run: |
+          pip install psycopg2-binary --break-system-packages
+          pip install -r backend/requirements.txt --break-system-packages
+      - name: Apply migrations
+        run: DSN="postgresql://postgres:postgres@127.0.0.1:5432/selfdev" bash scripts/apply-migrations.sh
+
+      - name: Start backend
+        env:
+          DATABASE_URL: postgresql://app_writer:change_me_in_production@127.0.0.1:5432/selfdev
+          JWT_SECRET: dev-only-secret-change-me
+        working-directory: backend
+        # Background + explicit wait: the suite fails with a bare
+        # "Connection refused" if it starts before uvicorn is listening, and
+        # that failure looks like broken code rather than a race.
+        run: |
+          nohup python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/health && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8000/health || { echo "backend did not start:"; cat /tmp/backend.log; exit 1; }
+
       - working-directory: frontend
         run: npm ci
       - working-directory: frontend
         run: npm run build
-      # Frontend vitest integration tests need a live backend (see frontend/README.md) --
-      # deliberately not run here yet; add a backend service + migrations to this job
-      # (mirroring the `backend` job above) before enabling `npx vitest run` in CI.
+      - name: Run frontend tests
+        working-directory: frontend
+        env:
+          # mint_session.py connects to the database directly to create the
+          # user and sign the tokens -- it needs the same secret the backend
+          # uses, or the tokens it mints would be rejected.
+          JWT_SECRET: dev-only-secret-change-me
+          POSTGRES_HOST: 127.0.0.1
+          APP_WRITER_PASSWORD: change_me_in_production
+        run: npx vitest run

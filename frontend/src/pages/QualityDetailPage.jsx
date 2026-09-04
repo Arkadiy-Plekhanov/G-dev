@@ -190,7 +190,7 @@ export default function QualityDetailPage() {
           {byContext.map((c) => (
             <div key={c.context_id ?? 'none'} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span>{c.context_label || '—'}</span>
+                <span>{c.context_label?.en || '—'}</span>
                 <span className="eyebrow">{c.count} · {Number(c.avg_score).toFixed(1)}</span>
               </div>
               {/* Горизонтальная полоса -- относительно самого частого

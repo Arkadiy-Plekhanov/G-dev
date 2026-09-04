@@ -164,6 +164,10 @@ class ActionWithExpressionsIn(BaseModel):
     result: Optional[str] = None
     note: Optional[str] = None
     status_code: str = "done"
+    # Ключ идемпотентности (ADR v2 §5). Необязателен: без него каждый
+    # запрос создаёт новое действие, как и раньше. С ним повтор с тем же
+    # ключом вернёт уже созданное -- защита от даблтапа и офлайн-ретрая.
+    client_request_id: Optional[str] = Field(default=None, max_length=200)
     qualities: list[ExpressionNestedIn] = []
 
     @field_validator("qualities")
@@ -218,19 +222,22 @@ class ExpressionOut(BaseModel):
 # ---------- reference ----------
 class OptionOut(BaseModel):
     code: str
-    label: str
+    label: dict          # {"en": ..., "ru": ...} -- как у catalog_qualities.name:
+                         # сервер отдаёт весь объект, язык выбирает клиент
 
 
 class GroupOut(BaseModel):
     id: int
     code: str
-    label: str
+    label: dict          # {"en": ..., "ru": ...} -- как у catalog_qualities.name:
+                         # сервер отдаёт весь объект, язык выбирает клиент
 
 
 class ContextOut(BaseModel):
     id: int
     code: str
-    label: str
+    label: dict          # {"en": ..., "ru": ...} -- как у catalog_qualities.name:
+                         # сервер отдаёт весь объект, язык выбирает клиент
 
 
 # ---------- development cycles ----------
@@ -400,7 +407,7 @@ class QualityExpressionOut(BaseModel):
 class QualityContextStat(BaseModel):
     """Разбивка качества по контекстам действия («где чаще проявляется»)."""
     context_id: Optional[int] = None
-    context_label: Optional[str] = None
+    context_label: Optional[dict] = None   # {"en": ..., "ru": ...}
     count: int
     avg_score: float
 

@@ -135,7 +135,7 @@ export default function SeasonFormPage() {
         <div className="field">
           <label>{t('seasons.status')}</label>
           <select value={statusCode} onChange={(e) => setStatusCode(e.target.value)}>
-            {statusOptions.map((o) => <option key={o.code} value={o.code}>{o.label}</option>)}
+            {statusOptions.map((o) => <option key={o.code} value={o.code}>{o.label.en}</option>)}
           </select>
         </div>
 

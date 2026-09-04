@@ -79,13 +79,13 @@ export default function GoalsListPage() {
           <div className="field">
             <label>{t('goals.status')}</label>
             <select value={statusCode} onChange={(e) => setStatusCode(e.target.value)}>
-              {statuses.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
+              {statuses.map((s) => <option key={s.code} value={s.code}>{s.label.en}</option>)}
             </select>
           </div>
           <div className="field">
             <label>{t('goals.priority')}</label>
             <select value={priorityCode} onChange={(e) => setPriorityCode(e.target.value)}>
-              {priorities.map((p) => <option key={p.code} value={p.code}>{p.label}</option>)}
+              {priorities.map((p) => <option key={p.code} value={p.code}>{p.label.en}</option>)}
             </select>
           </div>
           <button className="btn btn-primary" disabled={saving}>{saving ? t('common.loading') : t('common.save')}</button>

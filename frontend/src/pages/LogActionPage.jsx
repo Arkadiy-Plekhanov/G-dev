@@ -27,6 +27,12 @@ export default function LogActionPage() {
   const [selected, setSelected] = useState([]) // [{userQualityId, name, score: null|0-4, comment}]
 
   const [saving, setSaving] = useState(false)
+  // Ключ идемпотентности -- ОДИН на заполненную форму, не на каждый клик:
+  // в этом весь смысл. Даблтап и повтор после сетевого сбоя приходят с тем
+  // же ключом, и бэкенд возвращает уже созданное действие вместо второго
+  // такого же (ADR v2 §5). Новый ключ берётся только когда форма
+  // открывается заново -- то есть под новое, действительно другое событие.
+  const [requestId] = useState(() => crypto.randomUUID())
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -71,6 +77,7 @@ export default function LogActionPage() {
         occurred_at: occurredAt,
         goal_id: goalId || null,
         context_id: contextId ? Number(contextId) : null,
+        client_request_id: requestId,
         qualities: rated.map((s) => ({ quality_id: s.userQualityId, score: s.score, comment: s.comment || null })),
       })
       navigate('/', { replace: true })
@@ -108,7 +115,7 @@ export default function LogActionPage() {
         <label>{t('action.context')}</label>
         <select value={contextId} onChange={(e) => setContextId(e.target.value)}>
           <option value="">—</option>
-          {contexts.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+          {contexts.map((c) => <option key={c.id} value={c.id}>{c.label.en}</option>)}
         </select>
       </div>
 

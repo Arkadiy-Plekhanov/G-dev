@@ -55,6 +55,16 @@ def create_action(body: ActionIn, user_id: str = Depends(get_current_user_id)):
                 (new_id, user_id, body.goal_id, body.name, body.occurred_at, body.description,
                  body.context_id, body.result, body.note, body.status_code),
             )
+    except psycopg2.errors.UniqueViolation:
+        # Гонка: два одинаковых запроса пришли одновременно, проверка выше
+        # обоих не поймала, и уникальный индекс отсёк второй. Отдаём то,
+        # что записал победитель -- для клиента результат тот же.
+        with get_conn(user_id) as cur:
+            cur.execute(_SELECT + " WHERE a.client_request_id = %s", (body.client_request_id,))
+            existing = cur.fetchone()
+        if existing:
+            return existing
+        raise
     except psycopg2.Error as e:
         raise_from_db_error(e)
     with get_conn(user_id) as cur:
@@ -67,16 +77,33 @@ def create_action_with_qualities(body: ActionWithExpressionsIn, user_id: str = D
     """Основной сценарий ежедневной практики: действие и ВСЕ его проявления
     качеств создаются одной DB-транзакцией. Либо всё сохраняется, либо
     ничего -- сетевой сбой посреди записи не может оставить действие без
-    части качеств."""
+    части качеств.
+
+    Идемпотентно по client_request_id (ADR v2 §5). Клиент генерирует ключ
+    один раз на попытку записи и повторяет с ТЕМ ЖЕ ключом при ретрае --
+    повторный запрос возвращает уже созданное действие, а не второе такое
+    же. Это не про чистоту таблицы: дубль попадает в средние оценки, в
+    тренды и в сравнение «выше/ниже обычного», то есть искажает ровно то,
+    ради чего продукт существует. Без ключа поведение прежнее -- каждый
+    запрос создаёт новое действие."""
+    if body.client_request_id:
+        # Проверка ДО вставки: обычный случай ретрая, когда первый запрос
+        # успел записаться, а ответ не дошёл.
+        with get_conn(user_id) as cur:
+            cur.execute(_SELECT + " WHERE a.client_request_id = %s", (body.client_request_id,))
+            existing = cur.fetchone()
+            if existing:
+                return existing
+
     new_id = str(uuid.uuid4())
     try:
         with get_conn(user_id) as cur:
             cur.execute(
                 """INSERT INTO actions (id, user_id, goal_id, name, occurred_at, description,
-                                         context_id, result, note, status_code)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                         context_id, result, note, status_code, client_request_id)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                 (new_id, user_id, body.goal_id, body.name, body.occurred_at, body.description,
-                 body.context_id, body.result, body.note, body.status_code),
+                 body.context_id, body.result, body.note, body.status_code, body.client_request_id),
             )
             for q in body.qualities:
                 cur.execute(

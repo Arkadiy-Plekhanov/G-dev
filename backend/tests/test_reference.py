@@ -65,3 +65,32 @@ def test_quality_groups(auth_client):
     r = client.get("/v1/reference/quality-groups", headers=h)
     assert r.status_code == 200
     assert len(r.json()) == 9
+
+
+def test_reference_labels_are_localised_not_russian_only(auth_client):
+    """Подписи справочников хранились обычным текстом на ОДНОМ языке
+    (русском) и приезжали в англоязычный интерфейс как есть: в поле
+    «Context» на «Log an action» стояло «Публичное выступление», в статусах
+    целей -- «Активна». Видно на скриншотах с реального устройства.
+
+    ADR v2 §6 требует для отображаемых текстов JSONB {locale: text} --
+    каталог качеств так и сделан, справочники отставали. Миграция 17
+    приводит их к тому же виду; тест фиксирует, что сервер отдаёт объект
+    с обоими языками, а не строку."""
+    client, h = auth_client
+
+    contexts = client.get("/v1/reference/action-contexts", headers=h).json()
+    assert contexts, "справочник контекстов пуст"
+    for c in contexts:
+        assert isinstance(c["label"], dict), "label должен быть объектом {en, ru}"
+        assert c["label"]["en"], f"нет английской подписи у контекста {c['code']}"
+        assert c["label"]["ru"], f"потерян русский первоисточник у {c['code']}"
+    assert any(c["code"] == "public_speaking" and c["label"]["en"] == "Public speaking"
+               for c in contexts)
+
+    statuses = client.get("/v1/reference/options/goal_status", headers=h).json()
+    assert any(s["code"] == "active" and s["label"]["en"] == "Active" for s in statuses)
+
+    groups = client.get("/v1/reference/quality-groups", headers=h).json()
+    for g in groups:
+        assert g["label"]["en"], f"нет английской подписи у группы {g['code']}"

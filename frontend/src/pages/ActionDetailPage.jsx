@@ -53,7 +53,7 @@ export default function ActionDetailPage() {
       {action.description && <p>{action.description}</p>}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         <span className="eyebrow">{action.occurred_at}</span>
-        {context && <span className="pill">{context.label}</span>}
+        {context && <span className="pill">{context.label.en}</span>}
         {action.goal_id && <span className="pill pill--gold">{t('goals.title')}</span>}
       </div>
 

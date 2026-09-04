@@ -528,3 +528,59 @@ def test_export_includes_season_links(scenario):
     data = client.get("/v1/me/export", headers=h).json()
     assert len(data["cycle_goals"]) == 1
     assert len(data["cycle_qualities"]) == 1
+
+
+# ---------- идемпотентность создания действия (ADR v2 §5) ----------
+
+def test_repeated_action_creation_with_same_key_returns_the_same_action(scenario):
+    """Повтор с тем же client_request_id не создаёт второе действие.
+
+    Дубль -- не просто лишняя строка: он попадает в средние оценки, в
+    тренды и в сравнение «выше/ниже обычного», то есть искажает именно ту
+    аналитику, ради которой продукт существует. Проверяем и это тоже, а
+    не только счёт записей."""
+    client, h, ctx = scenario
+    payload = {
+        "name": "Провёл переговоры", "occurred_at": "2026-08-20",
+        "goal_id": ctx["goal"]["id"], "client_request_id": "retry-key-1",
+        "qualities": [{"quality_id": ctx["quality"]["id"], "score": 4}],
+    }
+    first = client.post("/v1/actions/with-qualities", json=payload, headers=h)
+    assert first.status_code == 201
+
+    second = client.post("/v1/actions/with-qualities", json=payload, headers=h)
+    assert second.status_code in (200, 201)
+    assert second.json()["id"] == first.json()["id"], "повтор создал ВТОРОЕ действие"
+
+    # Проявление качества тоже одно -- иначе среднее поехало бы.
+    exprs = client.get(f"/v1/actions/{first.json()['id']}/expressions", headers=h).json()
+    assert len(exprs) == 1
+
+
+def test_action_creation_without_key_still_creates_separate_actions(scenario):
+    """Ключ необязателен: без него поведение прежнее -- два одинаковых
+    запроса это два разных действия. Человек действительно может дважды
+    за день сделать одно и то же, и это не ошибка."""
+    client, h, ctx = scenario
+    payload = {"name": "Повторяющееся дело", "occurred_at": "2026-08-21",
+               "goal_id": ctx["goal"]["id"], "qualities": []}
+    a = client.post("/v1/actions/with-qualities", json=payload, headers=h).json()
+    b = client.post("/v1/actions/with-qualities", json=payload, headers=h).json()
+    assert a["id"] != b["id"]
+
+
+def test_idempotency_key_is_scoped_per_user(scenario):
+    """Область уникальности -- пользователь, не вся таблица: два человека
+    могут независимо прислать одинаковый ключ, и это не конфликт."""
+    client, h, ctx = scenario
+    payload = {"name": "Общий ключ", "occurred_at": "2026-08-22",
+               "client_request_id": "shared-key", "qualities": []}
+    mine = client.post("/v1/actions/with-qualities", json=payload, headers=h)
+    assert mine.status_code == 201
+
+    # Второй пользователь с тем же ключом -- своё, независимое действие.
+    other_login = client.post("/v1/auth/google", json={"id_token": "x"}).json()
+    h2 = {"Authorization": f"Bearer {other_login['access_token']}"}
+    theirs = client.post("/v1/actions/with-qualities", json=payload, headers=h2)
+    assert theirs.status_code == 201
+    assert theirs.json()["id"] != mine.json()["id"]
